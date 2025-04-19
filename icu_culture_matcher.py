@@ -199,20 +199,13 @@ if icu_file and culture_file:
         # 환자ID를 문자열로 강제 변환
         result_sorted["환자ID"] = result_sorted["환자ID"].astype(str)
 
-        # 선택 컬럼 구성
+        # 선택 컬럼 출력
         columns_to_show = ["No", "환자ID", "초성", "성별"]
         if not birth_unavailable:
             columns_to_show.append("생년월일")
         columns_to_show += ["입실일", "퇴실일", "혈액배양일"]
         if use_result_col:
             columns_to_show.append("분리균")
-
-        # 중복 제거 (순서 유지)
-        columns_to_show = list(dict.fromkeys(columns_to_show))
-
-        # 실제 존재하는 컬럼만 유지
-        available_columns = result_sorted.columns.tolist()
-        columns_to_show = [col for col in columns_to_show if col in available_columns]
 
 
         st.success("✅ 매칭 완료! 결과 미리보기")
