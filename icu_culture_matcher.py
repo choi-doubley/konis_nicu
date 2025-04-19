@@ -109,7 +109,7 @@ if icu_file and culture_file:
     name_source = st.selectbox("📁 이름이 있는 파일", all_column_options, key="name_src")
     name_df = all_column_sources[name_source]
     name_id_col = st.selectbox("🔑 환자 ID 컬럼", name_df.columns, key="name_id", index=name_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid"], name_df.columns) or name_df.columns[0]))
-    name_col = st.selectbox("🧒 이름 컬럼", name_df.columns, key="name_col", index=name_df.columns.get_loc(find_column(["이름", "성명", "name"], name_df.columns) or name_df.columns[0]))
+    name_col = st.selectbox("🧒 이름 컬럼", name_df.columns, key="name_col", index=name_df.columns.get_loc(find_column(["환자명","이름", "성명", "name"], name_df.columns) or name_df.columns[0]))
 
     st.markdown("---")
     st.markdown("### ⚧️ 성별 정보")
