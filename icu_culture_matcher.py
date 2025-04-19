@@ -33,8 +33,8 @@ def find_column(candidates, columns):
 
 # 앱 시작
 st.set_page_config(page_title="NICU KONIS Matcher", layout="centered")
-# st.title("NICU KONIS 혈액배양양성환자 작성 도우미")
-st.markdown("## NICU KONIS 타당도 조사<br>혈액배양양성환자 작성 도우미", unsafe_allow_html=True)
+# st.title("NICU KONIS 혈액배양 양성자 명단 작성 도우미")
+st.markdown("## NICU KONIS 타당도 조사<br>혈액배양 양성자 명단 작성 도우미", unsafe_allow_html=True)
 
 
 icu_file = st.file_uploader("📄 중환자실 입퇴실 파일 업로드 (.xlsx)", type=['xlsx'])
