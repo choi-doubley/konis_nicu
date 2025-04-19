@@ -176,18 +176,23 @@ if icu_file and culture_file:
 
         # 생년월일 병합 (선택적)
         if not birth_unavailable:
-            birth_df = birth_df[[birth_id_col, birth_col]].copy()
+            try:
+                birth_df = birth_df[[birth_id_col, birth_col]].copy()
 
-            # 생년월일이 날짜형식인지 확인
-            if not pd.api.types.is_datetime64_any_dtype(birth_df[birth_col]):
-                try:
+                if not pd.api.types.is_datetime64_any_dtype(birth_df[birth_col]):
                     birth_df[birth_col] = parse_dates_safe(birth_df[birth_col])
-                    st.info("📅 생년월일 컬럼이 문자열 형식으로 되어 있어 자동으로 날짜로 변환했습니다.")
-                except Exception:
-                    st.warning("⚠️ 생년월일 컬럼이 날짜 형식이 아니며 변환에 실패했습니다. 결과에 문제가 있을 수 있습니다.")
+                    st.info("📅 생년월일 컬럼이 문자열 형식으로 되어 있어 자동 변환했습니다.")
 
-            result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
-            result.rename(columns={birth_col: "생년월일"}, inplace=True)
+                result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
+                result.rename(columns={birth_col: "생년월일"}, inplace=True)
+
+                birth_column_success = "생년월일" in result.columns  # ✅ 확인
+            except Exception as e:
+                st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
+                birth_column_success = False
+        else:
+            birth_column_success = False
+
 
         # 컬럼명 정리
         result.rename(columns={
@@ -210,7 +215,7 @@ if icu_file and culture_file:
 
         # 선택 컬럼 출력
         columns_to_show = ["No", "환자ID", "초성", "성별"]
-        if not birth_unavailable:
+        if birth_column_success:
             columns_to_show.append("생년월일")
         columns_to_show += ["입실일", "퇴실일", "혈액배양일"]
         if use_result_col:
