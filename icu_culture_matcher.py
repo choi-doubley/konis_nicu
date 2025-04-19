@@ -175,24 +175,28 @@ if icu_file and culture_file:
             result = result.merge(gender_df, left_on=culture_id, right_on=gender_id_col, how='left')
 
         # 생년월일 병합 (선택적)
+        birth_column_success = False ## 기본값 설정
         if not birth_unavailable:
             try:
                 birth_df = birth_df[[birth_id_col, birth_col]].copy()
 
-                if not pd.api.types.is_datetime64_any_dtype(birth_df[birth_col]):
-                    birth_df[birth_col] = parse_dates_safe(birth_df[birth_col])
-                    st.info("📅 생년월일 컬럼이 문자열 형식으로 되어 있어 자동 변환했습니다.")
+                # 날짜로 파싱 시도
+                parsed_birth = parse_dates_safe(birth_df[birth_col])
 
-                result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
-                result.rename(columns={birth_col: "생년월일"}, inplace=True)
+                # 유효한 날짜 비율 계산
+                valid_ratio = parsed_birth.notna().mean()
 
-                birth_column_success = "생년월일" in result.columns  # ✅ 확인
+                if valid_ratio < 0.5:
+                    st.warning("⚠️ 선택한 생년월일 컬럼은 날짜로 해석할 수 없는 값이 많습니다. 생년월일 정보가 병합되지 않았을 수 있습니다.")
+                else:
+                    birth_df[birth_col] = parsed_birth
+                    st.info("📅 생년월일 컬럼이 문자열 형식으로 되어 있어 자동으로 날짜로 변환했습니다.")
+                    result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
+                    result.rename(columns={birth_col: "생년월일"}, inplace=True)
+                    birth_column_success = "생년월일" in result.columns
+
             except Exception as e:
                 st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
-                birth_column_success = False
-        else:
-            birth_column_success = False
-
 
         # 컬럼명 정리
         result.rename(columns={
