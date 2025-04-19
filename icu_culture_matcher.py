@@ -80,7 +80,9 @@ if icu_file and culture_file:
     st.subheader("🧫 혈액배양 파일 컬럼 선택")
     culture_id = st.selectbox("🔑 환자 ID", culture_df.columns)
     culture_date = st.selectbox("📅 혈액배양일", culture_df.columns)
-    culture_result = st.selectbox("🧫 혈액배양 결과(분리균) 컬럼", culture_df.columns)
+    use_result_col = st.checkbox("🔍 분리균(배양결과) 정보를 포함합니다", value=True)
+    if use_result_col:
+        culture_result = st.selectbox("🧫 혈액배양 결과(분리균) 컬럼", culture_df.columns, index=culture_df.columns.get_loc(find_column(["균"], culture_df.columns) or culture_df.columns[0]))
 
     # 병합에 사용할 전체 후보 파일
     all_column_sources = {
@@ -182,9 +184,10 @@ if icu_file and culture_file:
             culture_id: "환자ID",
             icu_in: "입실일",
             icu_out: "퇴실일",
-            culture_date: "혈액배양일",
-            culture_result: "분리균"
+            culture_date: "혈액배양일"
         }, inplace=True)
+        if use_result_col:
+            result.rename(columns={culture_result: "분리균"}, inplace=True)
 
         # 정렬 및 일련번호
         result_sorted = result.sort_values(by=["입실일", "혈액배양일"], ascending=[True, True], na_position="last")
@@ -194,7 +197,9 @@ if icu_file and culture_file:
         columns_to_show = ["No", "환자ID", "초성", "성별"]
         if not birth_unavailable:
             columns_to_show.append("생년월일")
-        columns_to_show += ["입실일", "퇴실일", "혈액배양일", "분리균"]
+        columns_to_show += ["입실일", "퇴실일", "혈액배양일"]
+        if use_result_col:
+            columns_to_show.append("분리균")
 
         st.success("✅ 매칭 완료! 결과 미리보기")
         st.dataframe(result_sorted[columns_to_show], use_container_width=True)
