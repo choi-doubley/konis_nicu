@@ -222,6 +222,12 @@ if icu_file and culture_file:
         # 환자ID를 문자열로 강제 변환
         result_sorted["환자ID"] = result_sorted["환자ID"].astype(str)
 
+        # 날짜 포맷을 yyyy-mm-dd로 통일
+        for col in ["입실일", "퇴실일", "혈액배양일", "생년월일"]:
+            if col in result_sorted.columns:
+                result_sorted[col] = pd.to_datetime(result_sorted[col], errors="coerce").dt.strftime("%Y-%m-%d")
+
+        
         # 선택 컬럼 출력
         columns_to_show = ["No", "환자ID", "초성", "성별"]
         if birth_column_success:
