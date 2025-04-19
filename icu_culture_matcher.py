@@ -200,7 +200,8 @@ if icu_file and culture_file:
         result_sorted["환자ID"] = result_sorted["환자ID"].astype(str)
 
         # 선택 컬럼 출력
-        columns_to_show = ["No", "환자ID", "초성", "성별"]
+        available_columns = result_sorted.columns.tolist()
+        columns_to_show = [col for col in ["No", "환자ID", "초성", "성별", "입실일", "퇴실일", "혈액배양일"] if col in available_columns]
         if not birth_unavailable:
             columns_to_show.append("생년월일")
         columns_to_show += ["입실일", "퇴실일", "혈액배양일"]
