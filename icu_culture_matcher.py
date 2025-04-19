@@ -74,12 +74,12 @@ if icu_file and culture_file:
 
     st.subheader("🏥 중환자실 파일 컬럼 선택")
     icu_id = st.selectbox("🔑 환자 ID", icu_df.columns, index=icu_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], icu_df.columns) or icu_df.columns[0]))
-    icu_in = st.selectbox("📅 입실일", icu_df.columns, index=icu_df.columns.get_loc(find_column(["입실"], icu_df.columns) or icu_df.columns[0]))
-    icu_out = st.selectbox("📅 퇴실일", icu_df.columns, index=icu_df.columns.get_loc(find_column(["퇴실"], icu_df.columns) or icu_df.columns[0]))
+    icu_in = st.selectbox("📅 입실일", icu_df.columns, index=icu_df.columns.get_loc(find_column(["입실일", "입원일", "admission"], icu_df.columns) or icu_df.columns[0]))
+    icu_out = st.selectbox("📅 퇴실일", icu_df.columns, index=icu_df.columns.get_loc(find_column(["퇴실일", "퇴원일", "discharge"], icu_df.columns) or icu_df.columns[0]))
 
     st.subheader("🧫 혈액배양 파일 컬럼 선택")
     culture_id = st.selectbox("🔑 환자 ID", culture_df.columns, index=culture_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], culture_df.columns) or culture_df.columns[0]))
-    culture_date = st.selectbox("📅 혈액배양일", culture_df.columns, index=culture_df.columns.get_loc(find_column(["시행", "채취", "검사", "culturedate"], culture_df.columns) or culture_df.columns[0]))
+    culture_date = st.selectbox("📅 혈액배양일", culture_df.columns, index=culture_df.columns.get_loc(find_column(["배양일", "채취일", "검사일", "culturedate"], culture_df.columns) or culture_df.columns[0]))
 
     all_column_sources = {
         "중환자실 파일": icu_df,
@@ -92,19 +92,19 @@ if icu_file and culture_file:
 
     st.markdown("---")
     st.markdown("### 📅 생년월일 정보")
-birth_available = st.checkbox("❔ 생년월일 정보가 없습니다 (비워둡니다)", value=False)
+birth_available = st.checkbox("❔ 생년월일 정보가 없습니다 (비워둡니다)", value=False)", value=False)
 if not birth_available:
     birth_source = st.selectbox("📁 생년월일이 있는 파일", all_column_options, key="birth_src")
     birth_df = all_column_sources[birth_source]
-        birth_id_col = st.selectbox("ID 컬럼명", birth_df.columns, key="birth_id", index=birth_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], birth_df.columns) or birth_df.columns[0])) or birth_df.columns[0]))
-        birth_col = st.selectbox("컬럼명", birth_df.columns, key="birth_col", index=birth_df.columns.get_loc(find_column(["생년월일", "birthdate", "dob"], birth_df.columns) or birth_df.columns[0])) or birth_df.columns[0]))
+    birth_col = st.selectbox("컬럼명", birth_df.columns, key="birth_col", index=birth_df.columns.get_loc(find_column(["생년월일", "birthdate", "dob"], birth_df.columns) or birth_df.columns[0]))
+    birth_id_col = st.selectbox("ID 컬럼명", birth_df.columns, key="birth_id", index=birth_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], birth_df.columns) or birth_df.columns[0])) or birth_df.columns[0])) or birth_df.columns[0]))
 
     st.markdown("---")
     st.markdown("### 👶 이름 정보")
     name_source = st.selectbox("📁 이름이 있는 파일", all_column_options, key="name_src")
     name_df = all_column_sources[name_source]
+    name_col = st.selectbox("컬럼명", name_df.columns, key="name_col", index=name_df.columns.get_loc(find_column(["이름", "성명", "name"], name_df.columns) or name_df.columns[0]))
     name_id_col = st.selectbox("ID 컬럼명", name_df.columns, key="name_id", index=name_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], name_df.columns) or name_df.columns[0]))
-    name_col = st.selectbox("컬럼명", name_df.columns, key="name_col", index=name_df.columns.get_loc(find_column(["환자명","이름", "성명", "name"], name_df.columns) or name_df.columns[0]))
 
     st.markdown("---")
     st.markdown("### ⚧️ 성별 정보")
@@ -117,7 +117,7 @@ if not birth_available:
         combined_col = st.selectbox("📑 결합된 컬럼명", gender_df.columns, key="combined_col", index=gender_df.columns.get_loc(find_column(["성별/나이", "성별|나이", "S/A", "S|A"], gender_df.columns) or gender_df.columns[0]))
         detected_delim = detect_delimiter(gender_df[combined_col])
         delimiter = st.text_input("🔹 구분자 (예: /)", value=detected_delim)
-        position = st.radio("🔹 성별은 구분자를 기준으로 어디에 있나요?", ["앞", "뒤"], horizontal=True)    
+        position = st.radio("🔹 성별은 구분자를 기준으로 어디에 있나요?", ["앞", "뒤"], horizontal=True)
     else:
         gender_col = st.selectbox("컬럼명", gender_df.columns, key="gender_col", index=gender_df.columns.get_loc(find_column(["성별", "gender", "sex"], gender_df.columns) or gender_df.columns[0]))
 
@@ -147,8 +147,9 @@ if not birth_available:
         name_df['초성'] = name_df[name_col].apply(get_initials)
         result = result.merge(name_df[[name_id_col, '초성']], left_on=culture_id, right_on=name_id_col, how='left')
 
-        birth_df = birth_df[[birth_id_col, birth_col]].copy()
-        result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
+                if not birth_available:
+    birth_df = birth_df[[birth_id_col, birth_col]].copy()
+    result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
 
         if use_combined:
             comb_df = gender_df[[gender_id_col, combined_col]].copy()
