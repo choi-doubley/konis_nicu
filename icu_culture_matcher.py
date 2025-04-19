@@ -62,7 +62,7 @@ def detect_delimiter(series):
 st.set_page_config(page_title="NICU KONIS Matcher", layout="centered")
 st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>혈액배양양성환자 작성 도우미</h1>", unsafe_allow_html=True)
 st.markdown(
-"<div style='text-align:center; font-size: 0.9em; color: gray;'>"
+"<div style='text-align:right; font-size: 0.9em; color: gray;'>"
 "최종 업데이트: 2025-04-19<br> 문의: cyypedr@gmail.com"
 "</div>", unsafe_allow_html=True)
 
