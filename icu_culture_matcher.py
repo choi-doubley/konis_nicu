@@ -215,13 +215,6 @@ if icu_file and culture_file:
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
             result_sorted[columns_to_show] = result_sorted[columns_to_show].astype({"환자ID": str})
             result_sorted[columns_to_show].to_excel(writer, index=False)
-        # 환자ID 컬럼 포맷을 문자열로 지정
-            worksheet = writer.sheets["Sheet1"]
-            for idx, col in enumerate(columns_to_show):
-                if col == "환자ID":
-                    for cell in worksheet.iter_cols(min_col=idx+1, max_col=idx+1, min_row=2, max_row=len(result_sorted)+1):
-                        for c in cell:
-                            c.number_format = "@"
         output.seek(0)
 
         st.download_button("📥 결과 다운로드 (.xlsx)", data=output,
