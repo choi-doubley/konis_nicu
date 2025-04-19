@@ -180,20 +180,25 @@ if icu_file and culture_file:
             try:
                 birth_df = birth_df[[birth_id_col, birth_col]].copy()
 
-                # 날짜로 파싱 시도
-                parsed_birth = parse_dates_safe(birth_df[birth_col])
+                # 문자열 길이 기준 필터 (길이 8 이상이 50% 이상이어야 함)
+                str_lengths = birth_df[birth_col].astype(str).str.len()
+                long_enough_ratio = (str_lengths >= 8).mean()
 
-                # 유효한 날짜 비율 계산
-                valid_ratio = parsed_birth.notna().mean()
-
-                if valid_ratio < 0.5:
-                    st.warning("⚠️ 선택한 생년월일 컬럼은 날짜로 해석할 수 없는 값이 많습니다. 생년월일 정보가 병합되지 않았을 수 있습니다.")
+                if long_enough_ratio < 0.5:
+                    st.warning("❌ 선택한 생년월일 컬럼의 값 대부분이 날짜 형식이 아닙니다. 컬럼 선택을 다시 확인해 주세요.")
                 else:
-                    birth_df[birth_col] = parsed_birth
-                    st.info("📅 생년월일 컬럼이 문자열 형식으로 되어 있어 자동으로 날짜로 변환했습니다.")
-                    result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
-                    result.rename(columns={birth_col: "생년월일"}, inplace=True)
-                    birth_column_success = "생년월일" in result.columns
+                    # 날짜로 파싱 시도
+                    parsed_birth = parse_dates_safe(birth_df[birth_col])
+                    valid_ratio = parsed_birth.notna().mean()
+
+                    if valid_ratio < 0.5:
+                        st.warning("⚠️ 생년월일 컬럼의 값 중 다수가 날짜로 변환되지 않았습니다. 일부 정보가 누락되었을 수 있습니다.")
+                    else:
+                        birth_df[birth_col] = parsed_birth
+                        st.info("📅 생년월일 컬럼이 문자열 형식으로 되어 있어 자동으로 날짜로 변환했습니다.")
+                        result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
+                        result.rename(columns={birth_col: "생년월일"}, inplace=True)
+                        birth_column_success = "생년월일" in result.columns
 
             except Exception as e:
                 st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
