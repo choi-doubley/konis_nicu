@@ -54,13 +54,13 @@ if icu_file and culture_file:
     icu_in = st.selectbox(
         "📅 입실일 컬럼", icu_df.columns,
         index=icu_df.columns.get_loc(
-            find_column(["입실일", "입원일", "admit", "입실", "admission"], icu_df.columns) or icu_df.columns[0]
+            find_column(["입실일", "입실"], icu_df.columns) or icu_df.columns[0]
         )
     )
     icu_out = st.selectbox(
         "📅 퇴실일 컬럼", icu_df.columns,
         index=icu_df.columns.get_loc(
-            find_column(["퇴실일", "퇴원일", "discharge", "퇴실", "퇴원"], icu_df.columns) or icu_df.columns[0]
+            find_column(["퇴실일", "퇴실"], icu_df.columns) or icu_df.columns[0]
         )
     )
 
@@ -75,7 +75,7 @@ if icu_file and culture_file:
     culture_date = st.selectbox(
         "📅 혈액배양일 컬럼", culture_df.columns,
         index=culture_df.columns.get_loc(
-            find_column(["배양일", "채취일", "검사일", "culturedate", "검체일", "채혈일"], culture_df.columns) or culture_df.columns[0]
+            find_column(["시행일", "채취일", "검사일"], culture_df.columns) or culture_df.columns[0]
         )
     )
 
