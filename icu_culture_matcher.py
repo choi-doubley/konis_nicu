@@ -159,8 +159,8 @@ if icu_file and culture_file:
 
         # 이름 초성 변환 병합
         name_df = name_df[[name_id_col, name_col]].copy()
-        name_df['초성'] = name_df[name_col].apply(get_initials)
-        result = result.merge(name_df[[name_id_col, '초성']], left_on=culture_id, right_on=name_id_col, how='left')
+        name_df['이름'] = name_df[name_col].apply(get_initials)
+        result = result.merge(name_df[[name_id_col, '이름']], left_on=culture_id, right_on=name_id_col, how='left')
 
         # 성별 병합
         if use_combined:
@@ -229,7 +229,7 @@ if icu_file and culture_file:
 
         
         # 선택 컬럼 출력
-        columns_to_show = ["No", "환자ID", "초성", "성별"]
+        columns_to_show = ["No", "환자ID", "이름", "성별"]
         if birth_column_success:
             columns_to_show.append("생년월일")
         columns_to_show += ["입실일", "퇴실일", "혈액배양일"]
