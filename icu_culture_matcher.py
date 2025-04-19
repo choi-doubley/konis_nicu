@@ -33,7 +33,7 @@ def find_column(candidates, columns):
 
 # Streamlit 시작
 st.set_page_config(page_title="NICU KONIS Matcher", layout="centered")
-st.markdown("<h1 style='text-align:center;'>NICU KONIS<br>혈액배양양성환자 작성 도우미</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>혈액배양양성환자 작성 도우미</h1>", unsafe_allow_html=True)
 
 # 파일 업로드
 icu_file = st.file_uploader("📄 중환자실 입퇴실 파일 업로드 (.xlsx)", type=["xlsx"])
@@ -43,7 +43,7 @@ if icu_file and culture_file:
     icu_df = pd.read_excel(icu_file)
     culture_df = pd.read_excel(culture_file)
 
-    st.subheader("📁 중환자실 입퇴실 파일의 컬럼 선택")
+    st.subheader("🧸 중환자실 입퇴실 파일의 컬럼 선택")
 
     icu_id = st.selectbox(
         "🆔 환자 ID 컬럼", icu_df.columns,
