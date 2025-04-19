@@ -92,10 +92,12 @@ if icu_file and culture_file:
 
     st.markdown("---")
     st.markdown("### 📅 생년월일 정보")
+birth_available = st.checkbox("❔ 생년월일 정보가 없습니다 (비워둡니다)", value=False)
+if not birth_available:
     birth_source = st.selectbox("📁 생년월일이 있는 파일", all_column_options, key="birth_src")
     birth_df = all_column_sources[birth_source]
-    birth_id_col = st.selectbox("ID 컬럼명", birth_df.columns, key="birth_id", index=birth_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], birth_df.columns) or birth_df.columns[0]))
-    birth_col = st.selectbox("컬럼명", birth_df.columns, key="birth_col", index=birth_df.columns.get_loc(find_column(["생년월일", "birth", "dob"], birth_df.columns) or birth_df.columns[0]))
+        birth_id_col = st.selectbox("ID 컬럼명", birth_df.columns, key="birth_id", index=birth_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], birth_df.columns) or birth_df.columns[0])) or birth_df.columns[0]))
+        birth_col = st.selectbox("컬럼명", birth_df.columns, key="birth_col", index=birth_df.columns.get_loc(find_column(["생년월일", "birthdate", "dob"], birth_df.columns) or birth_df.columns[0])) or birth_df.columns[0]))
 
     st.markdown("---")
     st.markdown("### 👶 이름 정보")
