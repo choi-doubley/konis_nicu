@@ -196,6 +196,9 @@ if icu_file and culture_file:
         result_sorted = result.sort_values(by=["입실일", "혈액배양일"], ascending=[True, True], na_position="last")
         result_sorted.insert(0, "No", range(1, len(result_sorted) + 1))
 
+        # 환자ID를 문자열로 강제 변환
+        result_sorted["환자ID"] = result_sorted["환자ID"].astype(str)
+
         # 선택 컬럼 출력
         columns_to_show = ["No", "환자ID", "초성", "성별"]
         if not birth_unavailable:
