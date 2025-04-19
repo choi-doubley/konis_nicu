@@ -210,6 +210,7 @@ if icu_file and culture_file:
 
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            result_sorted[columns_to_show] = result_sorted[columns_to_show].astype({"환자ID": str})
             result_sorted[columns_to_show].to_excel(writer, index=False)
         output.seek(0)
 
