@@ -9,7 +9,7 @@ from collections import Counter
 
 # 생략 없이 전체 로직 이어서 작성
 
-    st.markdown("---")
+st.markdown("---")
     st.markdown("### 👶 이름 정보")
     name_source = st.selectbox("📁 이름이 있는 파일", all_column_options, key="name_src")
     name_df = all_column_sources[name_source]
