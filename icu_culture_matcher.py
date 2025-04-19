@@ -80,6 +80,7 @@ if icu_file and culture_file:
     st.subheader("🧫 혈액배양 파일 컬럼 선택")
     culture_id = st.selectbox("🔑 환자 ID", culture_df.columns)
     culture_date = st.selectbox("📅 혈액배양일", culture_df.columns)
+    culture_result = st.selectbox("🧫 혈액배양 결과(분리균) 컬럼", culture_df.columns)
 
     # 병합에 사용할 전체 후보 파일
     all_column_sources = {
@@ -121,3 +122,88 @@ if icu_file and culture_file:
         position = st.radio("🔹 성별은 구분자를 기준으로 어디에 있나요?", ["앞", "뒤"], horizontal=True)
     else:
         gender_col = st.selectbox("성별 컬럼", gender_df.columns, key="gender_col", index=gender_df.columns.get_loc(find_column(["성별", "gender", "sex"], gender_df.columns) or gender_df.columns[0]))
+
+    if st.button("🔁 매칭 실행"):
+        # 날짜 처리
+        icu_df[icu_in] = parse_dates_safe(icu_df[icu_in])
+        icu_df[icu_out] = parse_dates_safe(icu_df[icu_out])
+        culture_df[culture_date] = parse_dates_safe(culture_df[culture_date])
+
+        # ICU 데이터 병합
+        merged = culture_df.merge(
+            icu_df[[icu_id, icu_in, icu_out]],
+            left_on=culture_id, right_on=icu_id, how='left'
+        )
+
+        # 캘린더 데이 범위 계산
+        merged['culture_date_day'] = merged[culture_date].dt.date
+        merged['icu_in_day'] = merged[icu_in].dt.date
+        merged['icu_out_day'] = merged[icu_out].dt.date
+        merged['icu_day_start'] = merged['icu_in_day'] + pd.Timedelta(days=2)
+        merged['icu_day_end'] = merged['icu_out_day'] + pd.Timedelta(days=1)
+
+        # 조건에 맞는 환자만 필터링
+        matched = merged[
+            (merged['culture_date_day'] >= merged['icu_day_start']) &
+            (merged['culture_date_day'] <= merged['icu_day_end'])
+        ]
+
+        # culture_df와 다시 병합하여 원본 유지
+        result = culture_df.merge(
+            matched[[culture_id, culture_date, icu_in, icu_out]],
+            on=[culture_id, culture_date], how='left'
+        )
+
+        # 이름 초성 변환 병합
+        name_df = name_df[[name_id_col, name_col]].copy()
+        name_df['초성'] = name_df[name_col].apply(get_initials)
+        result = result.merge(name_df[[name_id_col, '초성']], left_on=culture_id, right_on=name_id_col, how='left')
+
+        # 성별 병합
+        if use_combined:
+            comb_df = gender_df[[gender_id_col, combined_col]].copy()
+            if position == "앞":
+                comb_df['성별'] = comb_df[combined_col].str.split(delimiter).str[0]
+            else:
+                comb_df['성별'] = comb_df[combined_col].str.split(delimiter).str[-1]
+            result = result.merge(comb_df[[gender_id_col, '성별']], left_on=culture_id, right_on=gender_id_col, how='left')
+        else:
+            gender_df = gender_df[[gender_id_col, gender_col]].rename(columns={gender_col: '성별'})
+            result = result.merge(gender_df, left_on=culture_id, right_on=gender_id_col, how='left')
+
+        # 생년월일 병합 (선택적)
+        if not birth_unavailable:
+            birth_df = birth_df[[birth_id_col, birth_col]]
+            result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
+            result.rename(columns={birth_col: "생년월일"}, inplace=True)
+
+        # 컬럼명 정리
+        result.rename(columns={
+            culture_id: "환자ID",
+            icu_in: "입실일",
+            icu_out: "퇴실일",
+            culture_date: "혈액배양일",
+            culture_result: "분리균"
+        }, inplace=True)
+
+        # 정렬 및 일련번호
+        result_sorted = result.sort_values(by=["입실일", "혈액배양일"], ascending=[True, True], na_position="last")
+        result_sorted.insert(0, "No", range(1, len(result_sorted) + 1))
+
+        # 선택 컬럼 출력
+        columns_to_show = ["No", "환자ID", "초성", "성별"]
+        if not birth_unavailable:
+            columns_to_show.append("생년월일")
+        columns_to_show += ["입실일", "퇴실일", "혈액배양일", "분리균"]
+
+        st.success("✅ 매칭 완료! 결과 미리보기")
+        st.dataframe(result_sorted[columns_to_show], use_container_width=True)
+
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            result_sorted[columns_to_show].to_excel(writer, index=False)
+        output.seek(0)
+
+        st.download_button("📥 결과 다운로드 (.xlsx)", data=output,
+                           file_name="matched_result.xlsx",
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
