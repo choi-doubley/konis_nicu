@@ -80,7 +80,8 @@ if icu_file and culture_file:
     st.subheader("🧫 혈액배양 파일 컬럼 선택")
     culture_id = st.selectbox("🆔 환자 ID", culture_df.columns, index=culture_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], culture_df.columns) or culture_df.columns[0]))
     culture_date = st.selectbox("📅 혈액배양일", culture_df.columns, index=culture_df.columns.get_loc(find_column(["시행일", "채취일", "검사일"], culture_df.columns) or culture_df.columns[0]))
-    use_result_col = st.checkbox("🔍 분리균(배양결과) 정보가 있습니다", value=True)
+    use_result_col = st.checkbox("❔ 분리균 정보가 없습니다", value=False)
+    use_result_col = not use_result_col
     if use_result_col:
         culture_result = st.selectbox("🧫 혈액배양 결과(분리균) 컬럼", culture_df.columns, index=culture_df.columns.get_loc(find_column(["균"], culture_df.columns) or culture_df.columns[0]))
 
@@ -96,7 +97,7 @@ if icu_file and culture_file:
 
     st.markdown("---")
     st.markdown("### 📅 생년월일 정보")
-    birth_unavailable = st.checkbox("❔ 생년월일 정보가 없습니다 (비워둡니다)", value=False)
+    birth_unavailable = st.checkbox("❔ 생년월일 정보가 없습니다", value=False)
     if not birth_unavailable:
         birth_source = st.selectbox("📁 생년월일이 있는 파일", all_column_options, key="birth_src")
         birth_df = all_column_sources[birth_source]
