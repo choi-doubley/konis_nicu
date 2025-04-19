@@ -69,19 +69,33 @@ if icu_file and culture_file:
     culture_id = st.selectbox("🔑 환자 ID", culture_df.columns)
     culture_date = st.selectbox("📅 혈액배양일", culture_df.columns)
 
+    # 병합 대상 컬럼 선택을 위한 전체 column pool 구성
+    all_column_sources = {
+        "중환자실 파일": icu_df,
+        "혈액배양 파일": culture_df
+    }
     if not info_df.empty:
-        st.subheader("🔔 환자 정보 (생년월일/이름/성별/나이)")
-        info_id = st.selectbox("🔑 ID (추가파일)", info_df.columns)
-        birth_col = st.selectbox("📅 생년월일", info_df.columns)
-        name_col = st.selectbox("👶 환자이름", info_df.columns)
+        all_column_sources["추가정보 파일"] = info_df
 
-        use_combined = st.checkbox("합성 (성별/나이) 하나의 컬럼에 있음")
-        if use_combined:
-            combined_col = st.selectbox("합성 컬럼", info_df.columns)
-            delimiter = st.text_input("구분자 (default: /)", value="/")
-        else:
-            gender_col = st.selectbox("♂️ 성별", info_df.columns)
-            age_col = st.selectbox("👶 나이", info_df.columns)
+    all_column_options = list(all_column_sources.keys())
+
+    st.subheader("🔔 환자 정보 (생년월일/이름/성별/나이)")
+    birth_source = st.selectbox("📁 생년월일이 있는 파일", all_column_options)
+    birth_col = st.selectbox("📅 생년월일 컬럼", all_column_sources[birth_source].columns)
+
+    name_source = st.selectbox("📁 이름이 있는 파일", all_column_options)
+    name_col = st.selectbox("👶 환자이름 컬럼", all_column_sources[name_source].columns)
+
+    use_combined = st.checkbox("합성 (성별/나이) 하나의 컬럼에 있음")
+    if use_combined:
+        combined_source = st.selectbox("📁 합성 컬럼이 있는 파일", all_column_options)
+        combined_col = st.selectbox("합성 컬럼", all_column_sources[combined_source].columns)
+        delimiter = st.text_input("구분자 (default: /)", value="/")
+    else:
+        gender_source = st.selectbox("📁 성별이 있는 파일", all_column_options)
+        gender_col = st.selectbox("♂️ 성별 컬럼", all_column_sources[gender_source].columns)
+        age_source = st.selectbox("📁 나이가 있는 파일", all_column_options)
+        age_col = st.selectbox("👶 나이 컬럼", all_column_sources[age_source].columns)
 
     if st.button("🔁 매칭 실행"):
         icu_df[icu_in] = parse_dates_safe(icu_df[icu_in])
@@ -105,12 +119,25 @@ if icu_file and culture_file:
             matched[[culture_id, culture_date, icu_in, icu_out]],
             on=[culture_id, culture_date], how='left')
 
-        if not info_df.empty:
-            if use_combined:
-                info_df[['성별', '나이']] = info_df[combined_col].str.split(delimiter, expand=True)
-            result = result.merge(info_df[[info_id, birth_col, name_col, '성별', '나이']],
-                                  left_on=culture_id, right_on=info_id, how='left')
-            result['초성'] = result[name_col].apply(get_initials)
+        # 이름/생년월일/성별/나이 붙이기
+        name_df = all_column_sources[name_source][[name_col, icu_id]].copy()
+        name_df['초성'] = name_df[name_col].apply(get_initials)
+        result = result.merge(name_df, left_on=culture_id, right_on=icu_id, how='left')
+
+        birth_df = all_column_sources[birth_source][[birth_col, icu_id]]
+        result = result.merge(birth_df, left_on=culture_id, right_on=icu_id, how='left')
+
+        if use_combined:
+            comb_df = all_column_sources[combined_source][[combined_col, icu_id]].copy()
+            comb_df[['성별', '나이']] = comb_df[combined_col].str.split(delimiter, expand=True)
+            result = result.merge(comb_df[['성별', '나이', icu_id]], left_on=culture_id, right_on=icu_id, how='left')
+        else:
+            gender_df = all_column_sources[gender_source][[gender_col, icu_id]].copy()
+            gender_df = gender_df.rename(columns={gender_col: '성별'})
+            age_df = all_column_sources[age_source][[age_col, icu_id]].copy()
+            age_df = age_df.rename(columns={age_col: '나이'})
+            result = result.merge(gender_df, left_on=culture_id, right_on=icu_id, how='left')
+            result = result.merge(age_df, left_on=culture_id, right_on=icu_id, how='left')
 
         result_sorted = result.sort_values(by=[icu_in, culture_date], ascending=[True, True], na_position="last")
 
