@@ -92,11 +92,11 @@ if icu_file and culture_file:
     if use_result_col:
         culture_result = st.selectbox("🦠 혈액배양 결과(분리균) 컬럼", culture_df.columns, index=culture_df.columns.get_loc(find_column(["균"], culture_df.columns) or culture_df.columns[0]))
 
-if not bsi_df.empty:
-    st.subheader("🚨 BSI 여부 파일 컬럼 선택")
-    bsi_id_col = st.selectbox("🆔 환자 ID", bsi_df.columns,
-        index=bsi_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], bsi_df.columns) or bsi_df.columns[0])
-    )
+    if not bsi_df.empty:
+        st.subheader("🚨 BSI 여부 파일 컬럼 선택")
+        bsi_id_col = st.selectbox("🆔 환자 ID", bsi_df.columns,
+            index=bsi_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], bsi_df.columns) or bsi_df.columns[0])
+        )
 
     # 병합에 사용할 전체 후보 파일
     all_column_sources = {
