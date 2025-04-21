@@ -104,11 +104,12 @@ if icu_file and culture_file:
 
     st.subheader("🧫 혈액배양 파일 컬럼 선택")
     culture_id = st.selectbox("🆔 환자 ID", culture_df.columns, index=culture_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], culture_df.columns) or culture_df.columns[0]))
-    culture_date = st.selectbox("📅 혈액배양일", culture_df.columns, index=culture_df.columns.get_loc(find_column(["시행일", "채취일", "검사일"], culture_df.columns) or culture_df.columns[0]))
+    culture_ward = st.selectbox("병동(시행부서)", culture_df.columns, index=culture_df.columns.get_loc(find_column(["병동", "부서"], culture_df.columns) or culture_df.columns[0]))
+    culture_date = st.selectbox("📅 혈액배양일", culture_df.columns, index=culture_df.columns.get_loc(find_column(["시행일", "채취일", "검사일","접수일"], culture_df.columns) or culture_df.columns[0]))
     use_result_col = st.checkbox("❔ 분리균 정보가 없습니다", value=False)
     use_result_col = not use_result_col
     if use_result_col:
-        culture_result = st.selectbox("🦠 혈액배양 결과(분리균) 컬럼", culture_df.columns, index=culture_df.columns.get_loc(find_column(["균"], culture_df.columns) or culture_df.columns[0]))
+        culture_result = st.selectbox("🦠 혈액배양 결과(분리균) 컬럼", culture_df.columns, index=culture_df.columns.get_loc(find_column(["미생물","결과"], culture_df.columns) or culture_df.columns[0]))
 
     if not bsi_df.empty:
         st.subheader("🚨 BSI 여부 파일 컬럼 선택")
@@ -241,6 +242,18 @@ if icu_file and culture_file:
             except Exception as e:
                 st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
 
+        # 병동(시행부서) 추가
+        result["병동"] = culture_df[culture_ward]
+
+        # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
+        result["비고"] = None
+        result.loc[
+            result["병동"].str.contains("NICU|신생아", na=False) & result["입실일"].isna(),
+            "비고"
+        ] = "입퇴실일 확인"
+
+
+        
         # 컬럼명 정리
         result.rename(columns={
             culture_id: "환자ID",
@@ -254,7 +267,11 @@ if icu_file and culture_file:
 
 
         # 정렬 및 일련번호
-        result_sorted = result.sort_values(by=["입실일", "혈액배양일"], ascending=[True, True], na_position="last")
+        result_sorted = result.sort_values(
+            by=["비고", "입실일", "혈액배양일"],
+            ascending=[False, True, True],
+            na_position="last"
+            )        
         result_sorted.insert(0, "No", range(1, len(result_sorted) + 1))
 
         # BSI 여부 병합
@@ -274,7 +291,7 @@ if icu_file and culture_file:
         columns_to_show = ["No", "환자ID", "이름", "성별"]
         if birth_column_success and "생년월일" in result_sorted.columns:
             columns_to_show.append("생년월일")
-        columns_to_show += [col for col in ["입실일", "퇴실일", "혈액배양일", "분리균", "BSI"] if col in result_sorted.columns]
+        columns_to_show += [col for col in ["입실일", "퇴실일", "혈액배양일", "분리균", "BSI","병동","비고"] if col in result_sorted.columns]
 
         # ✅ 존재하는 컬럼만 선택해서 출력 (KeyError 방지)
         columns_to_show = [col for col in columns_to_show if col in result_sorted.columns]
