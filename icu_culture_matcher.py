@@ -256,7 +256,7 @@ if icu_file and culture_file:
             icu_in: "입실일",
             icu_out: "퇴실일",
             culture_date: "혈액배양일",
-            culture_ward: "병동"
+            culture_ward: "시행병동"
         }, inplace=True)
         
         if use_result_col:
@@ -269,7 +269,7 @@ if icu_file and culture_file:
         result["비고"] = None
         
         result.loc[
-            result["병동"].str.contains("NICU|신생아", na=False) & result["입실일"].isna(),
+            result["시행병동"].str.contains("NICU|신생아", na=False) & result["입실일"].isna(),
             "비고"
         ] = "입퇴실일 확인"
 
@@ -299,7 +299,7 @@ if icu_file and culture_file:
         columns_to_show = ["No", "환자ID", "이름", "성별"]
         if birth_column_success and "생년월일" in result_sorted.columns:
             columns_to_show.append("생년월일")
-        columns_to_show += [col for col in ["입실일", "퇴실일", "혈액배양일", "분리균", "BSI","병동","비고"] if col in result_sorted.columns]
+        columns_to_show += [col for col in ["입실일", "퇴실일", "혈액배양일", "분리균", "BSI","시행병동","비고"] if col in result_sorted.columns]
 
         # ✅ 존재하는 컬럼만 선택해서 출력 (KeyError 방지)
         columns_to_show = [col for col in columns_to_show if col in result_sorted.columns]
