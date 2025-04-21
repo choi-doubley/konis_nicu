@@ -3,8 +3,15 @@ import streamlit as st
 from datetime import datetime
 import io
 from collections import Counter
+import re
 
 # 날짜 자동 인식
+def fix_time_format(val):
+    val_str = str(val)
+    if re.match(r'.*\d{6}$', val_str):  # 끝에 6자리 숫자
+        return re.sub(r'(\d{2})(\d{2})(\d{2})$', r'\1:\2:\3', val_str)
+    return val_str
+    
 def parse_dates_safe(series):
     known_formats = [
         "%Y-%m-%d", "%Y/%m/%d", "%d-%m-%Y", "%d/%m/%Y",
@@ -13,6 +20,7 @@ def parse_dates_safe(series):
     ]
     def try_parse(val):
         if pd.isna(val): return pd.NaT
+        val = fix_time_format(val)  # 👈 여기 추가
         for fmt in known_formats:
             try:
                 return datetime.strptime(str(val), fmt)
