@@ -8,8 +8,18 @@ import re
 # 날짜 자동 인식
 def fix_time_format(val):
     val_str = str(val)
-    if re.match(r'.*\d{6}$', val_str):  # 끝에 6자리 숫자
-        return re.sub(r'(\d{2})(\d{2})(\d{2})$', r'\1:\2:\3', val_str)
+    
+    # 시간 정보가 붙은 형식에서 잘못된 6자리 숫자만 시간으로 고치기
+    # 예: "2025-03-08 075844" 또는 "2025-03-08 07:5844" → "2025-03-08 07:58:44"
+    match = re.match(r'(.*\s)(\d{2}):?(\d{2})(\d{2})$', val_str)
+    if match:
+        return f"{match.group(1)}{match.group(2)}:{match.group(3)}:{match.group(4)}"
+    
+    # 혹시 그냥 6자리 숫자만 있는 경우에도 대응
+    match2 = re.match(r'(\d{2})(\d{2})(\d{2})$', val_str)
+    if match2:
+        return f"{match2.group(1)}:{match2.group(2)}:{match2.group(3)}"
+    
     return val_str
     
 def parse_dates_safe(series):
