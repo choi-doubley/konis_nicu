@@ -254,10 +254,12 @@ if icu_file and culture_file:
         if birth_column_success:
             columns_to_show.append("생년월일")
         columns_to_show += ["입실일", "퇴실일", "혈액배양일"]
-        if use_result_col:
+        if use_result_col and "분리균" in result_sorted.columns:
             columns_to_show.append("분리균")
-        if not bsi_df.empty:
+        if not bsi_df.empty and "BSI" in result_sorted.columns:
             columns_to_show.append("BSI")
+
+        columns_to_show = [col for col in columns_to_show if col in result_sorted.columns]
 
         st.success("✅ 매칭 완료! 결과 미리보기")
         st.dataframe(result_sorted[columns_to_show], use_container_width=True)
