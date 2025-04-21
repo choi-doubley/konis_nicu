@@ -261,9 +261,13 @@ if icu_file and culture_file:
         
         if use_result_col:
             result.rename(columns={culture_result: "분리균"}, inplace=True)
- 
+
+        # 기존 "비고" 컬럼이 존재하면 삭제하고 새로 생성
         # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
+        if "비고" in result.columns:
+            result.drop(columns=["비고"], inplace=True)            
         result["비고"] = None
+        
         result.loc[
             result["병동"].str.contains("NICU|신생아", na=False) & result["입실일"].isna(),
             "비고"
