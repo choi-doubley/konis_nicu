@@ -194,6 +194,11 @@ if icu_file and culture_file:
             on=[culture_id, culture_date], how='left'
         )
 
+        # 병동(시행부서)도 병합 방식으로 가져오기
+        ward_df = culture_df[[culture_id, culture_date, culture_ward]].copy()
+        result = result.merge(ward_df, on=[culture_id, culture_date], how="left")
+
+        
         # 이름 초성 변환 병합
         name_df = name_df[[name_id_col, name_col]].copy()
         name_df['이름'] = name_df[name_col].apply(get_initials)
@@ -242,10 +247,7 @@ if icu_file and culture_file:
             except Exception as e:
                 st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
 
-        # 병동(시행부서)도 병합 방식으로 가져오기
-        ward_df = culture_df[[culture_id, culture_date, culture_ward]].copy()
-        ward_df.rename(columns={culture_ward: "병동"}, inplace=True)
-        result = result.merge(ward_df, on=[culture_id, culture_date], how="left")
+
 
         
         # 컬럼명 정리
@@ -253,13 +255,13 @@ if icu_file and culture_file:
             culture_id: "환자ID",
             icu_in: "입실일",
             icu_out: "퇴실일",
-            culture_date: "혈액배양일"
+            culture_date: "혈액배양일",
+            culture_ward: "병동"
         }, inplace=True)
         
         if use_result_col:
             result.rename(columns={culture_result: "분리균"}, inplace=True)
-
-
+ 
         # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
         result["비고"] = None
         result.loc[
