@@ -237,7 +237,7 @@ if icu_file and culture_file:
         result_sorted.insert(0, "No", range(1, len(result_sorted) + 1))
 
         # BSI 여부 병합
-        if not bsi_df.empty:
+        if not bsi_df.empty and 'bsi_id_col' in locals():
             result_sorted["BSI"] = result_sorted["환자ID"].isin(bsi_df[bsi_id_col]).map({True: "Y", False: None})
     
         # 환자ID를 문자열로 강제 변환
@@ -251,13 +251,12 @@ if icu_file and culture_file:
         
         # 선택 컬럼 출력
         columns_to_show = ["No", "환자ID", "이름", "성별"]
-        if birth_column_success:
+        if birth_column_success and "생년월일" in result_sorted.columns:
             columns_to_show.append("생년월일")
-        columns_to_show += ["입실일", "퇴실일", "혈액배양일"]
-        if use_result_col:
-            columns_to_show.append("분리균")
-        if not bsi_df.empty:
-            columns_to_show.append("BSI")
+        columns_to_show += [col for col in ["입실일", "퇴실일", "혈액배양일", "분리균", "BSI"] if col in result_sorted.columns]
+
+        # ✅ 존재하는 컬럼만 선택해서 출력 (KeyError 방지)
+        columns_to_show = [col for col in columns_to_show if col in result_sorted.columns]
 
         st.success("✅ 매칭 완료! 결과 미리보기")
         st.dataframe(result_sorted[columns_to_show], use_container_width=True)
