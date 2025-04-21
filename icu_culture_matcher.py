@@ -128,27 +128,28 @@ if icu_file and culture_file:
     if not info_df.empty:
         all_column_sources["추가정보 파일"] = info_df
 
-    all_column_options = list(all_column_sources.keys())
+    # 항상 "혈액배양 파일"을 첫 번째로 보이도록 재정렬
+    all_column_options = ["혈액배양 파일"] + [k for k in all_column_sources.keys() if k != "혈액배양 파일"]
 
     st.markdown("---")
     st.markdown("### 📅 생년월일 정보")
     birth_unavailable = st.checkbox("❔ 생년월일 정보가 없습니다", value=False)
     if not birth_unavailable:
-        birth_source = st.selectbox("📁 생년월일이 있는 파일", all_column_options, key="birth_src")
+        birth_source = st.selectbox("📁 생년월일이 있는 파일", all_column_options, key="birth_src", index=0)
         birth_df = all_column_sources[birth_source]
         birth_id_col = st.selectbox("🆔 환자 ID 컬럼", birth_df.columns, key="birth_id", index=birth_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid"], birth_df.columns) or birth_df.columns[0]))
         birth_col = st.selectbox("📅 생년월일 컬럼", birth_df.columns, key="birth_col", index=birth_df.columns.get_loc(find_column(["생년월일", "birthdate", "dob"], birth_df.columns) or birth_df.columns[0]))
 
     st.markdown("---")
     st.markdown("### 👶 이름 정보")
-    name_source = st.selectbox("📁 이름이 있는 파일", all_column_options, key="name_src")
+    name_source = st.selectbox("📁 이름이 있는 파일", all_column_options, key="name_src", index=0)
     name_df = all_column_sources[name_source]
     name_id_col = st.selectbox("🔑 환자 ID 컬럼", name_df.columns, key="name_id", index=name_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid"], name_df.columns) or name_df.columns[0]))
     name_col = st.selectbox("🧒 이름 컬럼", name_df.columns, key="name_col", index=name_df.columns.get_loc(find_column(["환자명","이름", "성명", "name"], name_df.columns) or name_df.columns[0]))
 
     st.markdown("---")
     st.markdown("### 👦👧 성별 정보")
-    gender_source = st.selectbox("📁 성별이 있는 파일", all_column_options, key="gender_src")
+    gender_source = st.selectbox("📁 성별이 있는 파일", all_column_options, key="gender_src", index=0)
     gender_df = all_column_sources[gender_source]
     gender_id_col = st.selectbox("🆔 환자 ID 컬럼", gender_df.columns, key="gender_id", index=gender_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid"], gender_df.columns) or gender_df.columns[0]))
 
