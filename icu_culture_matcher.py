@@ -254,8 +254,10 @@ if icu_file and culture_file:
         if use_result_col:
             result.rename(columns={culture_result: "분리균"}, inplace=True)
 
-        # 병동(시행부서) 추가
-        result["병동"] = culture_df[culture_ward]
+        # 병동(시행부서)도 병합 방식으로 가져오기
+        ward_df = culture_df[[culture_id, culture_date, culture_ward]].copy()
+        ward_df.rename(columns={culture_ward: "병동"}, inplace=True)
+        result = result.merge(ward_df, on=[culture_id, culture_date], how="left")
 
         # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
         result["비고"] = None
