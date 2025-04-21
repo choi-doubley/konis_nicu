@@ -194,10 +194,6 @@ if icu_file and culture_file:
             on=[culture_id, culture_date], how='left'
         )
 
-        # 병동(시행부서)도 병합 방식으로 가져오기
-        ward_df = culture_df[[culture_id, culture_date, culture_ward]].copy()
-        result = result.merge(ward_df, on=[culture_id, culture_date], how="left")
-
         
         # 이름 초성 변환 병합
         name_df = name_df[[name_id_col, name_col]].copy()
