@@ -209,6 +209,8 @@ if icu_file and culture_file:
             gender_df = gender_df[[gender_id_col, gender_col]].rename(columns={gender_col: '성별'})
             result = result.merge(gender_df, left_on=culture_id, right_on=gender_id_col, how='left')
 
+        result = result.drop_duplicates(subset=[culture_id, culture_date, culture_result] if use_result_col else [culture_id, culture_date])
+
         # 생년월일 병합 (선택적)
         birth_column_success = False ## 기본값 설정
         if not birth_unavailable:
