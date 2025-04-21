@@ -70,11 +70,13 @@ st.markdown(
 # 파일 업로드
 icu_file = st.file_uploader("👶 중환자실 입퇴실 파일", type=["xlsx"])
 culture_file = st.file_uploader("🧫 혈액배양 파일", type=["xlsx"])
+bsi_file = st.file_uploader("🚨 BSI 환자목록 파일 (optional)", type=["xlsx"])
 info_file = st.file_uploader("📄 추가 환자정보 파일 (optional)", type=["xlsx"])
 
 if icu_file and culture_file:
     icu_df = pd.read_excel(icu_file)
     culture_df = pd.read_excel(culture_file)
+    bsi_df = pd.read_excel(bsi_file) if bsi_file else pd.DataFrame()
     info_df = pd.read_excel(info_file) if info_file else pd.DataFrame()
 
     st.subheader("🧸 중환자실 파일 컬럼 선택")
@@ -90,11 +92,21 @@ if icu_file and culture_file:
     if use_result_col:
         culture_result = st.selectbox("🦠 혈액배양 결과(분리균) 컬럼", culture_df.columns, index=culture_df.columns.get_loc(find_column(["균"], culture_df.columns) or culture_df.columns[0]))
 
+    if not bsi_df.empty:
+        st.subheader("🚨 BSI 여부 파일 컬럼 선택")
+        bsi_id_col = st.selectbox("🆔 환자 ID", bsi_df.columns,
+            index=bsi_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], bsi_df.columns) or bsi_df.columns[0])
+        )
+
     # 병합에 사용할 전체 후보 파일
     all_column_sources = {
         "중환자실 파일": icu_df,
         "혈액배양 파일": culture_df
     }
+
+    if not bsi_df.empty:
+        all_column_sources["BSI 파일"] = bsi_df
+    
     if not info_df.empty:
         all_column_sources["추가정보 파일"] = info_df
 
@@ -224,6 +236,10 @@ if icu_file and culture_file:
         result_sorted = result.sort_values(by=["입실일", "혈액배양일"], ascending=[True, True], na_position="last")
         result_sorted.insert(0, "No", range(1, len(result_sorted) + 1))
 
+        # BSI 여부 병합
+        if not bsi_df.empty:
+            result_sorted["BSI"] = result_sorted["환자ID"].isin(bsi_df[bsi_id_col]).map({True: "Y", False: None})
+    
         # 환자ID를 문자열로 강제 변환
         result_sorted["환자ID"] = result_sorted["환자ID"].astype(str)
 
@@ -240,7 +256,8 @@ if icu_file and culture_file:
         columns_to_show += ["입실일", "퇴실일", "혈액배양일"]
         if use_result_col:
             columns_to_show.append("분리균")
-
+        if not bsi_df.empty:
+            columns_to_show.append("BSI")
 
         st.success("✅ 매칭 완료! 결과 미리보기")
         st.dataframe(result_sorted[columns_to_show], use_container_width=True)
