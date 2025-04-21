@@ -242,18 +242,7 @@ if icu_file and culture_file:
             except Exception as e:
                 st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
 
-        # 병동(시행부서) 추가
-        result["병동"] = culture_df[culture_ward]
-
-        # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
-        result["비고"] = None
-        result.loc[
-            result["병동"].str.contains("NICU|신생아", na=False) & result["입실일"].isna(),
-            "비고"
-        ] = "입퇴실일 확인"
-
-
-        
+       
         # 컬럼명 정리
         result.rename(columns={
             culture_id: "환자ID",
@@ -264,6 +253,16 @@ if icu_file and culture_file:
         
         if use_result_col:
             result.rename(columns={culture_result: "분리균"}, inplace=True)
+
+        # 병동(시행부서) 추가
+        result["병동"] = culture_df[culture_ward]
+
+        # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
+        result["비고"] = None
+        result.loc[
+            result["병동"].str.contains("NICU|신생아", na=False) & result["입실일"].isna(),
+            "비고"
+        ] = "입퇴실일 확인"
 
 
         # 정렬 및 일련번호
