@@ -196,22 +196,24 @@ if icu_file and culture_file:
         # result = matched + unmatched로 culture_df의 모든 데이터 유지
         result = pd.concat([matched, unmatched], ignore_index=True, sort=False)
 
-
         
         # 이름 초성 변환 병합
         name_df = name_df[[name_id_col, name_col]].copy()
+        name_df = name_df.drop_duplicates(subset=[name_id_col], keep="last") ## 마지막 이름을 남김
         name_df['이름'] = name_df[name_col].apply(get_initials)
         result = result.merge(name_df[[name_id_col, '이름']], left_on=culture_id, right_on=name_id_col, how='left')
 
         # 성별 병합
         if use_combined:
             comb_df = gender_df[[gender_id_col, combined_col]].copy()
+            comb_df = comb_df.drop_duplicates(subset=[gender_id_col])
             if position == "앞":
                 comb_df['성별'] = comb_df[combined_col].str.split(delimiter).str[0]
             else:
                 comb_df['성별'] = comb_df[combined_col].str.split(delimiter).str[-1]
             result = result.merge(comb_df[[gender_id_col, '성별']], left_on=culture_id, right_on=gender_id_col, how='left')
         else:
+            gender_df = gender_df.drop_duplicates(subset=[gender_id_col])
             gender_df = gender_df[[gender_id_col, gender_col]].rename(columns={gender_col: '성별'})
             result = result.merge(gender_df, left_on=culture_id, right_on=gender_id_col, how='left')
 
@@ -243,7 +245,6 @@ if icu_file and culture_file:
 
             except Exception as e:
                 st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
-
 
         result = result.drop_duplicates(subset=[culture_id, culture_date, culture_result] if use_result_col else [culture_id, culture_date])
         
