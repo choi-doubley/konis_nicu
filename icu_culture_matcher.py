@@ -314,7 +314,7 @@ if icu_file and culture_file:
         columns_to_show = [col for col in columns_to_show if col in result_sorted.columns]
 
         st.success("✅ 매칭 완료! 결과 미리보기")
-        #st.write("✅ 컬럼 리스트:", result_sorted.columns.tolist())
+        ## st.write("✅ 컬럼 리스트:", result_sorted.columns.tolist())
         st.dataframe(result_sorted[columns_to_show], use_container_width=True)
 
         output = io.BytesIO()
