@@ -182,17 +182,20 @@ if icu_file and culture_file:
         merged['icu_day_start'] = merged['icu_in_day'] + pd.Timedelta(days=2)
         merged['icu_day_end'] = merged['icu_out_day'] + pd.Timedelta(days=1)
 
-        # 조건에 맞는 환자만 필터링
+        # ICU 기간 안에 포함된 matched
         matched = merged[
             (merged['culture_date_day'] >= merged['icu_day_start']) &
             (merged['culture_date_day'] <= merged['icu_day_end'])
         ]
 
-        # culture_df와 다시 병합하여 원본 유지
-        result = culture_df.merge(
-            matched[[culture_id, culture_date, icu_in, icu_out]],
-            on=[culture_id, culture_date], how='left'
-        )
+        # unmatched는 culture_df 중 matched되지 않은 것
+        matched_keys = matched[[culture_id, culture_date]].drop_duplicates()
+        unmatched = culture_df.merge(matched_keys, on=[culture_id, culture_date], how='outer', indicator=True)
+        unmatched = unmatched[unmatched['_merge'] == 'left_only'].drop(columns=['_merge'])
+
+        # result = matched + unmatched로 culture_df의 모든 데이터 유지
+        result = pd.concat([matched, unmatched], ignore_index=True, sort=False)
+
 
         
         # 이름 초성 변환 병합
