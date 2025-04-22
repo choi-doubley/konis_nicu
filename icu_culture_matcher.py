@@ -185,17 +185,44 @@ if icu_file and culture_file:
         merged['icu_day_end'] = merged['icu_out_day'] + pd.Timedelta(days=1)
 
         merged = merged.drop_duplicates(subset=[culture_id, culture_date, culture_result] if use_result_col else [culture_id, culture_date])
-        
-        # ICU 기간 안에 포함된 matched
-        matched = merged[
-            (merged['culture_date_day'] >= merged['icu_day_start']) &
-            (merged['culture_date_day'] <= merged['icu_day_end'])
-        ]
+        merged['surv_window'] = None
 
-        # unmatched는 culture_df 중 matched되지 않은 것
-        matched_keys = matched[[culture_id, culture_date]].drop_duplicates()
-        unmatched = culture_df.merge(matched_keys, on=[culture_id, culture_date], how='outer', indicator=True)
-        unmatched = unmatched[unmatched['_merge'] == 'left_only'].drop(columns=['_merge'])
+
+        # 1. 입실일 없는 경우 → 입퇴실일 확인
+        merged.loc[merged['icu_in_day'].isna(), 'surv_window'] = "입퇴실일 확인"
+
+
+        # 2. 감시기간 포함 (icu_day_start ≤ culture_date_day ≤ icu_day_end or icu_day_end isna)
+        condition_matched = (
+            (merged['icu_day_start'].notna()) &
+            (merged['culture_date_day'] >= merged['icu_day_start']) &
+            (
+                (merged['culture_date_day'] <= merged['icu_day_end']) |
+                (merged['icu_day_end'].isna())
+            )
+        )
+        merged.loc[condition_matched, 'surv_window'] = None  # matched → 비고 없음
+
+        # 3. 감시기간 이전 (culture_date_day < icu_day_start) → 감시기간 이전
+        condition_before = (
+            merged['icu_in_day'].notna() &
+            (merged['culture_date_day'] >= merged['icu_in_day']) &
+            (merged['culture_date_day'] < merged['icu_day_start'])
+        )
+        merged.loc[condition_before, 'surv_window'] = "감시기간 이전"
+
+        # 4. 감시기간 이후 (culture_date_day > icu_day_end) → 감시기간 이후
+        condition_after = (
+            merged['icu_day_end'].notna() &
+            (merged['culture_date_day'] > merged['icu_day_end'])
+        )
+        merged.loc[condition_after, 'surv_window'] = "감시기간 이후"
+
+        # matched: 비고가 None인 것
+        matched = merged[merged['surv_window'].isna()]
+
+        # unmatched: 나머지 비고가 있는 행
+        unmatched = merged[merged['surv_window'].notna()]
 
         # result = matched + unmatched로 culture_df의 모든 데이터 유지
         result = pd.concat([matched, unmatched], ignore_index=True, sort=False)
@@ -277,20 +304,29 @@ if icu_file and culture_file:
         # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
         if "비고" in result.columns:
             result.drop(columns=["비고"], inplace=True)            
-        result["비고"] = None
+        result["비고"] = result["surv_window"]
         
         result.loc[
-            result["시행병동"].str.contains("NICU|신생아", na=False) & result["입실일"].isna(),
+            result["시행병동"].str.contains("NICU|NR|신생아", na=False) & result["입실일"].isna(),
             "비고"
         ] = "입퇴실일 확인"
 
 
         # 정렬 및 일련번호
+        surv_window_sort = {
+            None: 0,
+            "입퇴실일 확인": 1,
+            "감시기간 이전": 2,
+            "감시기간 이후": 3
+        }
+        result["order_sort"] = result["비고"].map(surv_window_sort)
+
+        # 정렬 및 일련번호
         result_sorted = result.sort_values(
-            by=["비고", "입실일", "혈액배양일"],
-            ascending=[False, True, True],
+            by=["order_sort", "입실일", "혈액배양일"],
+            ascending=[True, True, True],
             na_position="last"
-            )        
+        ).drop(columns=["order_sort"])
         result_sorted.insert(0, "No", range(1, len(result_sorted) + 1))
 
         # BSI 여부 병합
