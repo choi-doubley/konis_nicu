@@ -200,8 +200,10 @@ if icu_file and culture_file:
         # result = matched + unmatched로 culture_df의 모든 데이터 유지
         result = pd.concat([matched, unmatched], ignore_index=True, sort=False)
 
+
         # 이름, 성별 병합 전에 중복가능성 있는 열 제거
-        for col in [name_col, "이름", gender_col, "성별"]:
+        gender_col_name = gender_col if not use_combined else combined_col
+        for col in [name_col, "이름", gender_col_name, "성별"]:
             if col in result.columns:
                 result.drop(columns=[col], inplace=True)
         
