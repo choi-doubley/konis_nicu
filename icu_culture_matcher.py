@@ -200,6 +200,10 @@ if icu_file and culture_file:
         # result = matched + unmatched로 culture_df의 모든 데이터 유지
         result = pd.concat([matched, unmatched], ignore_index=True, sort=False)
 
+        # 이름, 성별 병합 전에 중복가능성 있는 열 제거
+        for col in [name_col, "이름", gender_col, "성별"]:
+            if col in result.columns:
+                result.drop(columns=[col], inplace=True)
         
         # 이름 초성 변환 병합
         name_df = name_df[[name_id_col, name_col]].copy()
@@ -207,7 +211,7 @@ if icu_file and culture_file:
         name_df['이름'] = name_df[name_col].apply(get_initials)
         result = result.merge(name_df[[name_id_col, '이름']], left_on=culture_id, right_on=name_id_col, how='left')
 
-        # 성별 병합
+        # 성별 병합     
         if use_combined:
             comb_df = gender_df[[gender_id_col, combined_col]].copy()
             comb_df = comb_df.drop_duplicates(subset=[gender_id_col])
@@ -224,6 +228,9 @@ if icu_file and culture_file:
         # 생년월일 병합 (선택적)
         birth_column_success = False ## 기본값 설정
         if not birth_unavailable:
+            for col in [birth_col, "생년월일"]:
+                if col in result.columns:
+                    result.drop(columns=[col], inplace=True)               
             try:
                 birth_df = birth_df[[birth_id_col, birth_col]].copy()
                 birth_df = birth_df.drop_duplicates(subset=[birth_id_col])
@@ -307,7 +314,7 @@ if icu_file and culture_file:
         columns_to_show = [col for col in columns_to_show if col in result_sorted.columns]
 
         st.success("✅ 매칭 완료! 결과 미리보기")
-        st.write("✅ 컬럼 리스트:", result_sorted.columns.tolist())
+        #st.write("✅ 컬럼 리스트:", result_sorted.columns.tolist())
         st.dataframe(result_sorted[columns_to_show], use_container_width=True)
 
         output = io.BytesIO()
