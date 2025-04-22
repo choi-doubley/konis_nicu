@@ -164,15 +164,31 @@ if icu_file and culture_file:
         gender_col = st.selectbox("성별 컬럼", gender_df.columns, key="gender_col", index=gender_df.columns.get_loc(find_column(["성별", "gender", "sex"], gender_df.columns) or gender_df.columns[0]))
 
     if st.button("🔁 매칭 실행"):
-        # 날짜 처리
+        # 날짜 처리       
         icu_df[icu_in] = parse_dates_safe(icu_df[icu_in])
         icu_df[icu_out] = parse_dates_safe(icu_df[icu_out])
         culture_df[culture_date] = parse_dates_safe(culture_df[culture_date])
+        
+        # 입실/퇴실 정보가 여러 개인 환자 중 가장 적절한 ICU stay 하나만 붙이기
+        icu_df_sorted = icu_df.sort_values(by=[icu_id, icu_in])
+        culture_df_sorted = culture_df.sort_values(by=[culture_id, culture_date])
+        # 날짜는 merge_asof를 위해 datetime으로 정렬되어 있어야 함
+        icu_df_sorted[icu_in] = pd.to_datetime(icu_df_sorted[icu_in])
+        culture_df_sorted[culture_date] = pd.to_datetime(culture_df_sorted[culture_date])
 
-        # ICU 데이터 병합
-        merged = culture_df.merge(
-            icu_df[[icu_id, icu_in, icu_out]],
-            left_on=culture_id, right_on=icu_id, how='left'
+        # merge_asof를 통해 가장 가까운 ICU 입실일 이전의 입실 기록을 붙임
+        icu_df_sorted = icu_df_sorted.copy()
+        icu_df_sorted[merge_id] = icu_df_sorted[icu_id]
+        culture_df_sorted = culture_df_sorted.copy()
+        culture_df_sorted[merge_id] = culture_df_sorted[culture_id]
+
+        merged = pd.merge_asof(
+            culture_df_sorted,
+            icu_df_sorted[[icu_id, icu_in, icu_out]],
+            by=merge_id,
+            left_on=culture_date,
+            right_on=icu_in,
+            direction="backward"            
         )
 
         # 캘린더 데이 범위 계산
@@ -195,6 +211,7 @@ if icu_file and culture_file:
 
         # result = matched + unmatched로 culture_df의 모든 데이터 유지
         result = pd.concat([matched, unmatched], ignore_index=True, sort=False)
+        result = result.drop_duplicates(subset=[culture_id, culture_date, culture_result] if use_result_col else [culture_id, culture_date])
 
         
         # 이름 초성 변환 병합
