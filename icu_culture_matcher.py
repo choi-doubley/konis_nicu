@@ -182,6 +182,8 @@ if icu_file and culture_file:
         merged['icu_day_start'] = merged['icu_in_day'] + pd.Timedelta(days=2)
         merged['icu_day_end'] = merged['icu_out_day'] + pd.Timedelta(days=1)
 
+        merged = merged.drop_duplicates(subset=[culture_id, culture_date, culture_result] if use_result_col else [culture_id, culture_date])
+        
         # ICU 기간 안에 포함된 matched
         matched = merged[
             (merged['culture_date_day'] >= merged['icu_day_start']) &
