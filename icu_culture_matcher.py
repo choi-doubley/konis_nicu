@@ -182,14 +182,20 @@ if icu_file and culture_file:
         culture_df_sorted = culture_df_sorted.copy()
         culture_df_sorted["merge_id"] = culture_df_sorted[culture_id]  #
 
+        cols_to_use = [icu_in, icu_out, icu_id, "merge_id"]
+        for col in cols_to_use:
+            if col not in icu_df_sorted.columns:
+                st.stop()  # 또는 raise ValueError(f"{col} is missing in ICU dataframe")
+
         merged = pd.merge_asof(
             culture_df_sorted.sort_values(by=["merge_id", culture_date]),
-            icu_df_sorted.sort_values(by=["merge_id", icu_in])[[icu_in, icu_out, icu_id, "merge_id"]],
+            icu_df_sorted.sort_values(by=["merge_id", icu_in])[cols_to_use],
             by="merge_id",
             left_on=culture_date,
             right_on=icu_in,
             direction="backward"
         )
+
 
         # 병합 직후 필요 없는 컬럼 제거
         merged.drop(columns=["merge_id", icu_id], inplace=True)
