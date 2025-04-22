@@ -86,8 +86,8 @@ st.markdown(
 
 
 # 파일 업로드
-icu_file = st.file_uploader("👶 중환자실 입퇴실 파일", type=["xlsx"])
 culture_file = st.file_uploader("🧫 혈액배양 파일", type=["xlsx"])
+icu_file = st.file_uploader("👶 중환자실 입퇴실 파일", type=["xlsx"])
 bsi_file = st.file_uploader("🚨 BSI 환자목록 파일 (optional)", type=["xlsx"])
 info_file = st.file_uploader("📄 추가 환자정보 파일 (optional)", type=["xlsx"])
 
@@ -96,11 +96,6 @@ if icu_file and culture_file:
     culture_df = pd.read_excel(culture_file)
     bsi_df = pd.read_excel(bsi_file) if bsi_file else pd.DataFrame()
     info_df = pd.read_excel(info_file) if info_file else pd.DataFrame()
-
-    st.subheader("🧸 중환자실 파일 컬럼 선택")
-    icu_id = st.selectbox("🆔 환자 ID 컬럼", icu_df.columns, index=icu_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], icu_df.columns) or icu_df.columns[0]))
-    icu_in = st.selectbox("📅 입실일", icu_df.columns, index=icu_df.columns.get_loc(find_column(["입실"], icu_df.columns) or icu_df.columns[0]))
-    icu_out = st.selectbox("📅 퇴실일", icu_df.columns, index=icu_df.columns.get_loc(find_column(["퇴실"], icu_df.columns) or icu_df.columns[0]))
 
     st.subheader("🧫 혈액배양 파일 컬럼 선택")
     culture_id = st.selectbox("🆔 환자 ID", culture_df.columns, index=culture_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], culture_df.columns) or culture_df.columns[0]))
@@ -116,6 +111,13 @@ if icu_file and culture_file:
         bsi_id_col = st.selectbox("🆔 환자 ID", bsi_df.columns,
             index=bsi_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], bsi_df.columns) or bsi_df.columns[0])
         )
+        
+    st.subheader("🧸 중환자실 파일 컬럼 선택")
+    icu_id = st.selectbox("🆔 환자 ID 컬럼", icu_df.columns, index=icu_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], icu_df.columns) or icu_df.columns[0]))
+    icu_in = st.selectbox("📅 입실일", icu_df.columns, index=icu_df.columns.get_loc(find_column(["입실"], icu_df.columns) or icu_df.columns[0]))
+    icu_out = st.selectbox("📅 퇴실일", icu_df.columns, index=icu_df.columns.get_loc(find_column(["퇴실"], icu_df.columns) or icu_df.columns[0]))
+
+
 
     # 병합에 사용할 전체 후보 파일
     all_column_sources = {
