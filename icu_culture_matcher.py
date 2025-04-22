@@ -188,6 +188,10 @@ if icu_file and culture_file:
             st.error(f"❌ ICU 파일에서 다음 컬럼이 누락되었습니다: {', '.join(missing_cols)}")
             st.stop()
 
+        assert pd.api.types.is_datetime64_any_dtype(culture_df_sorted[culture_date]), "culture_date is not datetime"
+        assert pd.api.types.is_datetime64_any_dtype(icu_df_sorted[icu_in]), "icu_in is not datetime"
+
+        
         # merge_asof 실행
         merged = pd.merge_asof(
             culture_df_sorted.sort_values(by=["merge_id", culture_date]),
