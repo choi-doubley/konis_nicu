@@ -178,18 +178,21 @@ if icu_file and culture_file:
 
         # merge_asof를 통해 가장 가까운 ICU 입실일 이전의 입실 기록을 붙임
         icu_df_sorted = icu_df_sorted.copy()
-        icu_df_sorted["merge_id"] = icu_df_sorted[icu_id]
+        icu_df_sorted["merge_id"] = icu_df_sorted[icu_id]  #
         culture_df_sorted = culture_df_sorted.copy()
-        culture_df_sorted["merge_id"] = culture_df_sorted[culture_id]
+        culture_df_sorted["merge_id"] = culture_df_sorted[culture_id]  #
 
         merged = pd.merge_asof(
-            culture_df_sorted,
-            icu_df_sorted[[icu_id, icu_in, icu_out]],
+            culture_df_sorted.sort_values(by=["merge_id", culture_date]),
+            icu_df_sorted.sort_values(by=["merge_id", icu_in])[[icu_in, icu_out, icu_id, "merge_id"]],
             by="merge_id",
             left_on=culture_date,
             right_on=icu_in,
-            direction="backward"            
+            direction="backward"
         )
+
+        # 병합 직후 필요 없는 컬럼 제거
+        merged.drop(columns=["merge_id", icu_id], inplace=True)
 
         # 캘린더 데이 범위 계산
         merged['culture_date_day'] = merged[culture_date].dt.date
