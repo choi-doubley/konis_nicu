@@ -178,9 +178,9 @@ if icu_file and culture_file:
 
         # merge_asof를 통해 가장 가까운 ICU 입실일 이전의 입실 기록을 붙임
         icu_df_sorted = icu_df_sorted.copy()
-        icu_df_sorted[merge_id] = icu_df_sorted[icu_id]
+        icu_df_sorted["merge_id"] = icu_df_sorted[icu_id]
         culture_df_sorted = culture_df_sorted.copy()
-        culture_df_sorted[merge_id] = culture_df_sorted[culture_id]
+        culture_df_sorted["merge_id"] = culture_df_sorted[culture_id]
 
         merged = pd.merge_asof(
             culture_df_sorted,
