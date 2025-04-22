@@ -168,41 +168,28 @@ if icu_file and culture_file:
         icu_df[icu_in] = parse_dates_safe(icu_df[icu_in])
         icu_df[icu_out] = parse_dates_safe(icu_df[icu_out])
         culture_df[culture_date] = parse_dates_safe(culture_df[culture_date])
-     
-        # merge_asof를 위한 사본 및 merge_id 생성
-        icu_df_sorted = icu_df.copy()
-        icu_df_sorted["merge_id"] = icu_df_sorted[icu_id]
+        
+        # 입실/퇴실 정보가 여러 개인 환자 중 가장 적절한 ICU stay 하나만 붙이기
+        icu_df_sorted = icu_df.sort_values(by=[icu_id, icu_in])
+        culture_df_sorted = culture_df.sort_values(by=[culture_id, culture_date])
+        # 날짜는 merge_asof를 위해 datetime으로 정렬되어 있어야 함
         icu_df_sorted[icu_in] = pd.to_datetime(icu_df_sorted[icu_in])
-
-        culture_df_sorted = culture_df.copy()
-        culture_df_sorted["merge_id"] = culture_df_sorted[culture_id]
         culture_df_sorted[culture_date] = pd.to_datetime(culture_df_sorted[culture_date])
 
-        icu_df_sorted = icu_df_sorted.sort_values(by=["merge_id", icu_in])
-        culture_df_sorted = culture_df_sorted.sort_values(by=["merge_id", culture_date])
+        # merge_asof를 통해 가장 가까운 ICU 입실일 이전의 입실 기록을 붙임
+        icu_df_sorted = icu_df_sorted.copy()
+        icu_df_sorted["merge_id"] = icu_df_sorted[icu_id]  #
+        culture_df_sorted = culture_df_sorted.copy()
+        culture_df_sorted["merge_id"] = culture_df_sorted[culture_id]  #
 
-        # 필수 컬럼 체크
-        cols_to_use = [icu_in, icu_out, icu_id, "merge_id"]
-        missing_cols = [col for col in cols_to_use if col not in icu_df_sorted.columns]
-        if missing_cols:
-            st.error(f"❌ ICU 파일에서 다음 컬럼이 누락되었습니다: {', '.join(missing_cols)}")
-            st.stop()
-
-        assert pd.api.types.is_datetime64_any_dtype(culture_df_sorted[culture_date]), "culture_date is not datetime"
-        assert pd.api.types.is_datetime64_any_dtype(icu_df_sorted[icu_in]), "icu_in is not datetime"
-
-        icu_df_sorted = icu_df_sorted[cols_to_use].sort_values(by=["merge_id", icu_in])
-
-        # merge_asof 실행
         merged = pd.merge_asof(
-            culture_df_sorted,
-            icu_df_sorted,
+            culture_df_sorted.sort_values(by=["merge_id", culture_date]),
+            icu_df_sorted.sort_values(by=["merge_id", icu_in])[[icu_in, icu_out, icu_id, "merge_id"]],
             by="merge_id",
             left_on=culture_date,
             right_on=icu_in,
             direction="backward"
         )
-
 
         # 병합 직후 필요 없는 컬럼 제거
         merged.drop(columns=["merge_id", icu_id], inplace=True)
