@@ -185,7 +185,7 @@ if icu_file and culture_file:
         merged = pd.merge_asof(
             culture_df_sorted,
             icu_df_sorted[[icu_id, icu_in, icu_out]],
-            by=merge_id,
+            by="merge_id",
             left_on=culture_date,
             right_on=icu_in,
             direction="backward"            
