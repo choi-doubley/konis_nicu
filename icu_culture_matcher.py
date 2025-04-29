@@ -1,3 +1,6 @@
+## py -m streamlit run icu_culture_matcher_streamlit.py
+
+
 import pandas as pd
 import streamlit as st
 from datetime import datetime
@@ -81,7 +84,7 @@ st.set_page_config(page_title="NICU KONIS Matcher", layout="centered")
 st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>혈액배양양성환자 작성 도우미</h1>", unsafe_allow_html=True)
 st.markdown(
 "<div style='text-align:right; font-size: 0.9em; color: gray;'>"
-"최종 업데이트: 2025-04-19<br> 문의: cyypedr@gmail.com"
+"최종 업데이트: 2025-04-29<br> 문의: cyypedr@gmail.com"
 "</div>", unsafe_allow_html=True)
 
 
@@ -286,8 +289,6 @@ if icu_file and culture_file:
             except Exception as e:
                 st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
 
-        result = result.drop_duplicates(subset=[culture_id, culture_date, culture_result] if use_result_col else [culture_id, culture_date])
-        
         # 컬럼명 정리
         result.rename(columns={
             culture_id: "환자ID",
@@ -296,9 +297,18 @@ if icu_file and culture_file:
             culture_date: "혈액배양일",
             culture_ward: "시행병동"
         }, inplace=True)
-        
+
         if use_result_col:
             result.rename(columns={culture_result: "분리균"}, inplace=True)
+
+        # 날짜 포맷을 yyyy-mm-dd로 통일
+        for col in ["입실일", "퇴실일", "혈액배양일", "생년월일"]:
+            if col in result:
+                result[col] = pd.to_datetime(result[col], errors="coerce").dt.strftime("%Y-%m-%d")
+
+        result = result.drop_duplicates(subset=["환자ID", "혈액배양일", "분리균"] if use_result_col else ["환자ID", "혈액배양일"])        
+
+
 
         # 기존 "비고" 컬럼이 존재하면 삭제하고 새로 생성
         # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
@@ -323,7 +333,7 @@ if icu_file and culture_file:
 
         # 정렬 및 일련번호
         result_sorted = result.sort_values(
-            by=["order_sort", "입실일", "혈액배양일"],
+            by=["order_sort", "혈액배양일", "입실일"],
             ascending=[True, True, True],
             na_position="last"
         ).drop(columns=["order_sort"])
@@ -335,11 +345,6 @@ if icu_file and culture_file:
     
         # 환자ID를 문자열로 강제 변환
         result_sorted["환자ID"] = result_sorted["환자ID"].astype(str)
-
-        # 날짜 포맷을 yyyy-mm-dd로 통일
-        for col in ["입실일", "퇴실일", "혈액배양일", "생년월일"]:
-            if col in result_sorted.columns:
-                result_sorted[col] = pd.to_datetime(result_sorted[col], errors="coerce").dt.strftime("%Y-%m-%d")
 
         
         # 선택 컬럼 출력
