@@ -84,14 +84,14 @@ st.set_page_config(page_title="NICU KONIS Matcher", layout="centered")
 st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>혈액배양양성환자 작성 도우미</h1>", unsafe_allow_html=True)
 st.markdown(
 "<div style='text-align:right; font-size: 0.9em; color: gray;'>"
-"최종 업데이트: 2025-04-29<br> 문의: cyypedr@gmail.com"
+"최종 업데이트: 2025-05-08<br> 문의: cyypedr@gmail.com"
 "</div>", unsafe_allow_html=True)
 
 
 # 파일 업로드
 culture_file = st.file_uploader("🧫 혈액배양 파일", type=["xlsx"])
 icu_file = st.file_uploader("👶 중환자실 입퇴실 파일", type=["xlsx"])
-bsi_file = st.file_uploader("🚨 BSI 환자목록 파일 (optional)", type=["xlsx"])
+bsi_file = st.file_uploader("🚨 KONIS WRAP 등록환자 파일 (optional)", type=["xlsx"])
 info_file = st.file_uploader("📄 추가 환자정보 파일 (optional)", type=["xlsx"])
 
 if icu_file and culture_file:
@@ -102,15 +102,18 @@ if icu_file and culture_file:
 
     st.subheader("🧫 혈액배양 파일 컬럼 선택")
     culture_id = st.selectbox("🆔 환자 ID", culture_df.columns, index=culture_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], culture_df.columns) or culture_df.columns[0]))
-    culture_ward = st.selectbox("병동(시행부서)", culture_df.columns, index=culture_df.columns.get_loc(find_column(["병동", "부서"], culture_df.columns) or culture_df.columns[0]))
-    culture_date = st.selectbox("📅 혈액배양일", culture_df.columns, index=culture_df.columns.get_loc(find_column(["시행일", "채취일", "검사일","접수일"], culture_df.columns) or culture_df.columns[0]))
+    use_ward_col = st.checkbox("❔ 시행병동 정보가 없습니다", value=False)
+    use_ward_col = not use_ward_col
+    if use_ward_col:
+        culture_ward = st.selectbox("🚼 병동(시행부서)", culture_df.columns, index=culture_df.columns.get_loc(find_column(["병동", "부서"], culture_df.columns) or culture_df.columns[0]))
+    culture_date = st.selectbox("📅 혈액배양 의뢰일", culture_df.columns, index=culture_df.columns.get_loc(find_column(["시행일", "채취일", "검사일","접수일"], culture_df.columns) or culture_df.columns[0]))
     use_result_col = st.checkbox("❔ 분리균 정보가 없습니다", value=False)
     use_result_col = not use_result_col
     if use_result_col:
         culture_result = st.selectbox("🦠 혈액배양 결과(분리균) 컬럼", culture_df.columns, index=culture_df.columns.get_loc(find_column(["미생물","결과"], culture_df.columns) or culture_df.columns[0]))
 
     if not bsi_df.empty:
-        st.subheader("🚨 BSI 여부 파일 컬럼 선택")
+        st.subheader("🚨 KONIS WRAP 등록환자 컬럼 선택")
         bsi_id_col = st.selectbox("🆔 환자 ID", bsi_df.columns,
             index=bsi_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], bsi_df.columns) or bsi_df.columns[0])
         )
@@ -146,12 +149,12 @@ if icu_file and culture_file:
         birth_id_col = st.selectbox("🆔 환자 ID 컬럼", birth_df.columns, key="birth_id", index=birth_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid"], birth_df.columns) or birth_df.columns[0]))
         birth_col = st.selectbox("📅 생년월일 컬럼", birth_df.columns, key="birth_col", index=birth_df.columns.get_loc(find_column(["생년월일", "birthdate", "dob"], birth_df.columns) or birth_df.columns[0]))
 
-    st.markdown("---")
-    st.markdown("### 👶 이름 정보")
-    name_source = st.selectbox("📁 이름이 있는 파일", all_column_options, key="name_src", index=0)
-    name_df = all_column_sources[name_source]
-    name_id_col = st.selectbox("🔑 환자 ID 컬럼", name_df.columns, key="name_id", index=name_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid"], name_df.columns) or name_df.columns[0]))
-    name_col = st.selectbox("🧒 이름 컬럼", name_df.columns, key="name_col", index=name_df.columns.get_loc(find_column(["환자명","이름", "성명", "name"], name_df.columns) or name_df.columns[0]))
+    #st.markdown("---")
+    #st.markdown("### 👶 이름 정보")
+    #name_source = st.selectbox("📁 이름이 있는 파일", all_column_options, key="name_src", index=0)
+    #name_df = all_column_sources[name_source]
+    #name_id_col = st.selectbox("🔑 환자 ID 컬럼", name_df.columns, key="name_id", index=name_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid"], name_df.columns) or name_df.columns[0]))
+    #name_col = st.selectbox("🧒 이름 컬럼", name_df.columns, key="name_col", index=name_df.columns.get_loc(find_column(["환자명","이름", "성명", "name"], name_df.columns) or name_df.columns[0]))
 
     st.markdown("---")
     st.markdown("### 👦👧 성별 정보")
@@ -192,7 +195,7 @@ if icu_file and culture_file:
 
 
         # 1. 입실일 없는 경우 → 입퇴실일 확인
-        merged.loc[merged['icu_in_day'].isna(), 'surv_window'] = "입퇴실일 확인"
+        merged.loc[merged['icu_in_day'].isna(), 'surv_window'] = "시행부서 확인"
 
 
         # 2. 감시기간 포함 (icu_day_start ≤ culture_date_day ≤ icu_day_end or icu_day_end isna)
@@ -233,28 +236,28 @@ if icu_file and culture_file:
 
         # 이름, 성별 병합 전에 중복가능성 있는 열 제거
         gender_col_name = gender_col if not use_combined else combined_col
-        for col in [name_col, "이름", gender_col_name, "성별"]:
-            if col in result.columns:
-                result.drop(columns=[col], inplace=True)
+        #for col in [name_col, "이름", gender_col_name, "성별"]:
+        #    if col in result.columns:
+        #        result.drop(columns=[col], inplace=True)
         
         # 이름 초성 변환 병합
-        name_df = name_df[[name_id_col, name_col]].copy()
-        name_df = name_df.drop_duplicates(subset=[name_id_col], keep="last") ## 마지막 이름을 남김
-        name_df['이름'] = name_df[name_col].apply(get_initials)
-        result = result.merge(name_df[[name_id_col, '이름']], left_on=culture_id, right_on=name_id_col, how='left')
+        #name_df = name_df[[name_id_col, name_col]].copy()
+        #name_df = name_df.drop_duplicates(subset=[name_id_col], keep="last") ## 마지막 이름을 남김
+        #name_df['name_initial'] = name_df[name_col].apply(get_initials)
+        #result = result.merge(name_df[[name_id_col, 'name_initial']], left_on=culture_id, right_on=name_id_col, how='left')
 
         # 성별 병합     
         if use_combined:
             comb_df = gender_df[[gender_id_col, combined_col]].copy()
             comb_df = comb_df.drop_duplicates(subset=[gender_id_col])
             if position == "앞":
-                comb_df['성별'] = comb_df[combined_col].str.split(delimiter).str[0]
+                comb_df['gender'] = comb_df[combined_col].str.split(delimiter).str[0]
             else:
-                comb_df['성별'] = comb_df[combined_col].str.split(delimiter).str[-1]
-            result = result.merge(comb_df[[gender_id_col, '성별']], left_on=culture_id, right_on=gender_id_col, how='left')
+                comb_df['gender'] = comb_df[combined_col].str.split(delimiter).str[-1]
+            result = result.merge(comb_df[[gender_id_col, 'gender']], left_on=culture_id, right_on=gender_id_col, how='left')
         else:
             gender_df = gender_df.drop_duplicates(subset=[gender_id_col])
-            gender_df = gender_df[[gender_id_col, gender_col]].rename(columns={gender_col: '성별'})
+            gender_df = gender_df[[gender_id_col, gender_col]].rename(columns={gender_col: 'gender'})
             result = result.merge(gender_df, left_on=culture_id, right_on=gender_id_col, how='left')
 
         # 생년월일 병합 (선택적)
@@ -283,43 +286,36 @@ if icu_file and culture_file:
                     else:
                         birth_df[birth_col] = parsed_birth
                         result = result.merge(birth_df, left_on=culture_id, right_on=birth_id_col, how='left')
-                        result.rename(columns={birth_col: "생년월일"}, inplace=True)
-                        birth_column_success = "생년월일" in result.columns ## boolean
+                        result.rename(columns={birth_col: "dob"}, inplace=True)
+                        birth_column_success = birth_col in result.columns ## boolean
 
             except Exception as e:
                 st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
 
-        # 컬럼명 정리
-        result.rename(columns={
-            culture_id: "환자ID",
-            icu_in: "입실일",
-            icu_out: "퇴실일",
-            culture_date: "혈액배양일",
-            culture_ward: "시행병동"
-        }, inplace=True)
-
-        if use_result_col:
-            result.rename(columns={culture_result: "분리균"}, inplace=True)
 
         # 날짜 포맷을 yyyy-mm-dd로 통일
-        for col in ["입실일", "퇴실일", "혈액배양일", "생년월일"]:
+        date_cols = [icu_in, icu_out, culture_date]
+        if not birth_unavailable:
+            date_cols.append("dob")
+
+        for col in date_cols:
             if col in result:
                 result[col] = pd.to_datetime(result[col], errors="coerce").dt.strftime("%Y-%m-%d")
 
-        result = result.drop_duplicates(subset=["환자ID", "혈액배양일", "분리균"] if use_result_col else ["환자ID", "혈액배양일"])        
+        result = result.drop_duplicates(subset=[culture_id, culture_date, culture_result] if use_result_col else [culture_id, culture_date])        
 
 
 
-        # 기존 "비고" 컬럼이 존재하면 삭제하고 새로 생성
+        # 기존 "비고" 컬럼이 존재하면 삭제
         # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
         if "비고" in result.columns:
             result.drop(columns=["비고"], inplace=True)            
-        result["비고"] = result["surv_window"]
-        
-        result.loc[
-            result["시행병동"].str.contains("NICU|NR|신생아", na=False) & result["입실일"].isna(),
-            "비고"
-        ] = "입퇴실일 확인"
+
+        if use_ward_col and 'culture_ward' in locals() and culture_ward:
+            result.loc[
+                result[culture_ward].str.contains("NICU|NR|신생아", na=False) & result[icu_in].isna(),
+                "surv_window"
+            ] = "입퇴실일 확인"
 
 
         # 정렬 및 일련번호
@@ -329,43 +325,83 @@ if icu_file and culture_file:
             "감시기간 이전": 2,
             "감시기간 이후": 3
         }
-        result["order_sort"] = result["비고"].map(surv_window_sort)
+        result["order_sort"] = result["surv_window"].map(surv_window_sort)
 
         # 정렬 및 일련번호
         result_sorted = result.sort_values(
-            by=["order_sort", "혈액배양일", "입실일"],
+            by=["order_sort", culture_date, icu_in],
             ascending=[True, True, True],
             na_position="last"
         ).drop(columns=["order_sort"])
         result_sorted.insert(0, "No", range(1, len(result_sorted) + 1))
 
-        # BSI 여부 병합
+        # KONIS 등록여부 병합
         if not bsi_df.empty and 'bsi_id_col' in locals():
-            result_sorted["BSI"] = result_sorted["환자ID"].isin(bsi_df[bsi_id_col]).map({True: "Y", False: None})
+            result_sorted["KONIS"] = result_sorted[culture_id].isin(bsi_df[bsi_id_col]).map({True: "Y", False: "N"})
+            #result_sorted.rename(columns={"KONIS": "등록여부"}, inplace=True)
     
         # 환자ID를 문자열로 강제 변환
-        result_sorted["환자ID"] = result_sorted["환자ID"].astype(str)
-
+        result_sorted[culture_id] = result_sorted[culture_id].astype(str)
         
-        # 선택 컬럼 출력
-        columns_to_show = ["No", "환자ID", "이름", "성별"]
-        if birth_column_success and "생년월일" in result_sorted.columns:
-            columns_to_show.append("생년월일")
-        columns_to_show += [col for col in ["입실일", "퇴실일", "혈액배양일", "분리균", "BSI","시행병동","비고"] if col in result_sorted.columns]
+        # 결측 컬럼 처리
+        if use_result_col and 'culture_result' in locals() and culture_result:
+            result_sorted["culture_result2"]=result_sorted[culture_result]
+        else: 
+            result_sorted["culture_result2"]=None
 
-        # ✅ 존재하는 컬럼만 선택해서 출력 (KeyError 방지)
-        columns_to_show = [col for col in columns_to_show if col in result_sorted.columns]
+        if use_ward_col and 'culture_ward' in locals() and culture_ward:
+            result_sorted["culture_ward2"]=result_sorted[culture_ward]
+        else: 
+            result_sorted["culture_ward2"]=None           
+       
+        column_rename_map = {
+            "No": "번호",
+            culture_id: "등록번호_ID",
+            #"name_initial": "이름_초성",
+            "gender": "성별",
+            "dob": "생년월일",
+            icu_in: "입실일",
+            icu_out: "퇴실일",
+            culture_date: "혈액배양 의뢰일",
+            "culture_result2": "혈액배양 분리균",
+            "KONIS": "KONIS WRAP 등록여부",
+            "culture_ward2": "혈액배양 시행병동",
+            "surv_window": "비고"
+        }
 
+        for col in column_rename_map.keys():
+            if col not in result_sorted.columns:
+                result_sorted[col] = ""
+
+        # 필요한 컬럼만 선택
+        export_df = result_sorted[list(column_rename_map.keys())].rename(columns=column_rename_map) # 기본(외부 타당도 조사용)
+        export_df2 = export_df.copy()
+        insert_loc = export_df2.columns.get_loc("혈액배양 분리균") + 1
+        export_df2.insert(insert_loc, "BSI 분류", "") # 내부 타당도 조사용
+        
+        st.session_state["export_df1"] = export_df  
+        st.session_state["export_df2"] = export_df2  
+        st.session_state["matching_done"] = True
+
+    if st.session_state.get("matching_done", False):
         st.success("✅ 매칭 완료! 결과 미리보기")
-        ## st.write("✅ 컬럼 리스트:", result_sorted.columns.tolist())
-        st.dataframe(result_sorted[columns_to_show], use_container_width=True)
+        st.dataframe(st.session_state["export_df1"], use_container_width=True, hide_index=True)
+        #st.dataframe(export_df, use_container_width=True)
 
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            result_sorted[columns_to_show] = result_sorted[columns_to_show].astype({"환자ID": str})
-            result_sorted[columns_to_show].to_excel(writer, index=False)
-        output.seek(0)
+        # 다운로드 버튼 1
+        output1 = io.BytesIO()
+        with pd.ExcelWriter(output1, engine="openpyxl") as writer:
+            st.session_state["export_df1"].astype({"등록번호_ID": str}).to_excel(writer, index=False)
+        output1.seek(0)
+        st.download_button("📥 결과 다운로드 - 외부 타당도 조사용 (.xlsx)", data=output1,
+                           file_name="matched_result_external.xlsx",
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-        st.download_button("📥 결과 다운로드 (.xlsx)", data=output,
-                           file_name="matched_result.xlsx",
+
+        output2 = io.BytesIO()
+        with pd.ExcelWriter(output2, engine="openpyxl") as writer:
+            st.session_state["export_df2"].astype({"등록번호_ID": str}).to_excel(writer, index=False)
+        output2.seek(0)
+        st.download_button("📥 결과 다운로드 - 내부 타당도 조사용 (.xlsx)", data=output2,
+                           file_name="matched_result_internal.xlsx",
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
