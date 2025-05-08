@@ -81,7 +81,7 @@ def detect_delimiter(series):
 
 # Streamlit 시작
 st.set_page_config(page_title="NICU KONIS Matcher", layout="centered")
-st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>혈액배양양성환자 작성 도우미</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>타당도 조사 도우미</h1>", unsafe_allow_html=True)
 st.markdown(
     "<div style='text-align:right; font-size: 0.9em; color: gray;'>"
     "<a href='https://docs.google.com/presentation/d/e/2PACX-1vSzcC6SiwmarKSot29PFl28YYlteVCnLNCH3pLreJJBb9jWhPoAwuURMXoOcLv0AZ0VcVlHIIjfPgI9/pub?start=true&loop=true&delayms=3000' target='_blank'>매뉴얼 조회</a><br>"
