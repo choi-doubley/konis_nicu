@@ -84,12 +84,13 @@ st.set_page_config(page_title="NICU KONIS Matcher", layout="centered")
 st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>혈액배양양성환자 작성 도우미</h1>", unsafe_allow_html=True)
 st.markdown(
     "<div style='text-align:right; font-size: 0.9em; color: gray;'>"
-    "<a href='https://github.com/choi-doubley/konis_nicu/blob/main/KONIS_NICU_streamlit_manual.pdf?raw=T' target='_blank'>매뉴얼 다운로드</a><br>"
+    "<a href='https://docs.google.com/presentation/d/e/2PACX-1vSzcC6SiwmarKSot29PFl28YYlteVCnLNCH3pLreJJBb9jWhPoAwuURMXoOcLv0AZ0VcVlHIIjfPgI9/pub?start=true&loop=true&delayms=3000' target='_blank'>매뉴얼 조회</a><br>"
     "최종 업데이트: 2025-05-08<br>" 
     "문의: cyypedr@gmail.com"
     "</div>",
     unsafe_allow_html=True
 )
+#    "<a href='https://github.com/choi-doubley/konis_nicu/blob/main/KONIS_NICU_streamlit_manual.pdf?raw=T' target='_blank'>매뉴얼 다운로드</a><br>"
 
 # 파일 업로드
 culture_file = st.file_uploader("🧫 혈액배양 파일", type=["xlsx"])
