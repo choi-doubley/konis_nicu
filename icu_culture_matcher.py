@@ -95,10 +95,10 @@ bsi_file = st.file_uploader("🚨 KONIS WRAP 등록환자 파일 (optional)", ty
 info_file = st.file_uploader("📄 추가 환자정보 파일 (optional)", type=["xlsx"])
 
 if icu_file and culture_file:
-    icu_df = pd.read_excel(icu_file)
-    culture_df = pd.read_excel(culture_file)
-    bsi_df = pd.read_excel(bsi_file) if bsi_file else pd.DataFrame()
-    info_df = pd.read_excel(info_file) if info_file else pd.DataFrame()
+    icu_df = pd.read_excel(icu_file, dtype=str)
+    culture_df = pd.read_excel(culture_file, dtype=str)
+    bsi_df = pd.read_excel(bsi_file, dtype=str) if bsi_file else pd.DataFrame()
+    info_df = pd.read_excel(info_file, dtype=str) if info_file else pd.DataFrame()
 
     st.subheader("🧫 혈액배양 파일 컬럼 선택")
     culture_id = st.selectbox("🆔 환자 ID", culture_df.columns, index=culture_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], culture_df.columns) or culture_df.columns[0]))
