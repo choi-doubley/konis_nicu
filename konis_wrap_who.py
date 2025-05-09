@@ -62,6 +62,17 @@ def detect_delimiter(series):
 st.set_page_config(page_title="환자 ID 추정기", layout="centered")
 st.title("🔍 환자 ID 추정기")
 
+st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>타당도 조사 도우미2</h1><br>"
+            "<h3 style='text-align:center;'>감염환자 기록지 ID 찾기</h3>", unsafe_allow_html=True)
+st.markdown(
+    "<div style='text-align:right; font-size: 0.9em; color: gray;'>"
+    "<a href='https://github.com/choi-doubley/konis_nicu/blob/main/KONIS_NICU_streamlit_manual2.pdf?raw=T' target='_blank'>매뉴얼 다운로드</a><br>"
+    "최종 업데이트: 2025-05-08<br>" 
+    "문의: cyypedr@gmail.com"
+    "</div>",
+    unsafe_allow_html=True
+)
+
 file1 = st.file_uploader("🚨 KONIS WRAP 등록환자 파일", type=["xlsx", "csv"])
 file2 = st.file_uploader("👶 중환자실 입퇴실 파일", type=["xlsx", "csv"])
 file3 = st.file_uploader("🧫 혈액배양 파일", type=["xlsx", "csv"])
