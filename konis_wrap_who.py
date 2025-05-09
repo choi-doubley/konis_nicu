@@ -228,7 +228,7 @@ if file1 and file2 and file3:
         # final = final[["추정ID후보"] + [col for col in final.columns if col != "추정ID후보"]]
 
         st.success("✅ 추정 완료!")
-        st.dataframe(final, use_container_width=True)
+        st.dataframe(final, use_container_width=True, hide_index=True)
 
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
