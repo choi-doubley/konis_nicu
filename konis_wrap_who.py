@@ -60,7 +60,6 @@ def detect_delimiter(series):
 
 # Streamlit 앱 시작
 st.set_page_config(page_title="환자 ID 추정기", layout="centered")
-st.title("🔍 환자 ID 추정기")
 
 st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>타당도 조사 도우미2</h1><br>"
             "<h3 style='text-align:center;'>감염환자 기록지 ID 찾기</h3>", unsafe_allow_html=True)
@@ -139,7 +138,7 @@ if file1 and file2 and file3:
     else:
         gender_col = st.selectbox("성별 컬럼", gender_df.columns, key="gender_col", index=gender_df.columns.get_loc(find_column(["성별", "gender", "sex"], gender_df.columns) or gender_df.columns[0]))
 
-    if st.button("🚀 ID 추정 실행"):
+    if st.button("🔁 매칭 실행"):
         if gender_combined:
             comb_df = gender_df[[gender_id_col, combined_col]].copy()
             comb_df = comb_df.drop_duplicates(subset=[gender_id_col])
