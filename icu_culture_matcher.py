@@ -1,4 +1,4 @@
-## py -m streamlit run icu_culture_matcher_streamlit.py
+## py -m streamlit run icu_culture_matcher_streamlit_0512.py
 
 
 import pandas as pd
@@ -81,22 +81,18 @@ def detect_delimiter(series):
 
 # Streamlit 시작
 st.set_page_config(page_title="NICU KONIS Matcher", layout="centered")
-st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>타당도 조사 도우미</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>혈액배양양성환자 작성 도우미</h1>", unsafe_allow_html=True)
 st.markdown(
-    "<div style='text-align:right; font-size: 0.9em; color: gray;'>"
-    "<a href='https://github.com/choi-doubley/konis_nicu/blob/main/KONIS_NICU_streamlit_manual.pdf?raw=T' target='_blank'>매뉴얼 다운로드</a><br>"
-    "최종 업데이트: 2025-05-08<br>" 
-    "문의: cyypedr@gmail.com"
-    "</div>",
-    unsafe_allow_html=True
-)
-#    "<a href='https://github.com/choi-doubley/konis_nicu/blob/main/KONIS_NICU_streamlit_manual.pdf?raw=T' target='_blank'>매뉴얼 다운로드</a><br>"
+"<div style='text-align:right; font-size: 0.9em; color: gray;'>"
+"최종 업데이트: 2025-05-12<br> 문의: cyypedr@gmail.com"
+"</div>", unsafe_allow_html=True)
+
 
 # 파일 업로드
 culture_file = st.file_uploader("🧫 혈액배양 파일", type=["xlsx"])
 icu_file = st.file_uploader("👶 중환자실 입퇴실 파일", type=["xlsx"])
-bsi_file = st.file_uploader("🚨 KONIS WRAP 등록환자 파일 (optional)", type=["xlsx"])
-info_file = st.file_uploader("📄 추가 환자정보 파일 (optional)", type=["xlsx"])
+bsi_file = st.file_uploader("🚨 KONIS WRAP 등록환자 파일 (optional)", type=["xlsx"], help="ID 포함한 엑셀파일 없는 경우 konisnicuwho.streamlit.app 참고")
+info_file = st.file_uploader("📄 추가 환자정보 파일 (optional)", type=["xlsx"], help="혈액배양, 중환자실 파일에 생년월일 또는 성별 정보가 없는 경우에만 필요")
 
 if icu_file and culture_file:
     icu_df = pd.read_excel(icu_file, dtype=str)
@@ -114,14 +110,26 @@ if icu_file and culture_file:
     use_result_col = st.checkbox("❔ 분리균 정보가 없습니다", value=False)
     use_result_col = not use_result_col
     if use_result_col:
-        culture_result = st.selectbox("🦠 혈액배양 결과(분리균) 컬럼", culture_df.columns, index=culture_df.columns.get_loc(find_column(["미생물","결과"], culture_df.columns) or culture_df.columns[0]))
+        culture_result = st.selectbox("🦠 혈액배양 결과(분리균) 컬럼", culture_df.columns, index=culture_df.columns.get_loc(find_column(["미생물명","병원체","미생물","결과"], culture_df.columns) or culture_df.columns[0]))
 
     if not bsi_df.empty:
-        st.subheader("🚨 KONIS WRAP 등록환자 컬럼 선택")
+        st.markdown("### 🚨 KONIS WRAP 등록환자 컬럼 선택")
         bsi_id_col = st.selectbox("🆔 환자 ID", bsi_df.columns,
-            index=bsi_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], bsi_df.columns) or bsi_df.columns[0])
+            index=bsi_df.columns.get_loc(find_column(["환자번호", "병록번호", "추정ID","patientid", "patient_id"], bsi_df.columns) or bsi_df.columns[0])
         )
-        
+        bsi_date = st.selectbox("📅 감염발생일", bsi_df.columns,
+            index=bsi_df.columns.get_loc(find_column(["감염발생일", "일자", "검사일", "date"], bsi_df.columns) or bsi_df.columns[0])
+        )
+        bsi_pathogen = st.selectbox("🦠 병원체명", bsi_df.columns,
+            index=bsi_df.columns.get_loc(find_column(["미생물명","병원체", "미생물","결과"], bsi_df.columns) or bsi_df.columns[0])
+        )
+        use_lcbi_col = st.checkbox("❔ LCBI 종류 정보가 없습니다", value=False)
+        use_lcbi_col = not use_lcbi_col
+        if use_lcbi_col:
+            bsi_lcbi = st.selectbox("LCBI 종류", bsi_df.columns,
+                index=bsi_df.columns.get_loc(find_column(["LCBI"], bsi_df.columns) or bsi_df.columns[0])
+            )
+
     st.subheader("🧸 중환자실 파일 컬럼 선택")
     icu_id = st.selectbox("🆔 환자 ID 컬럼", icu_df.columns, index=icu_df.columns.get_loc(find_column(["환자번호", "병록번호", "patientid", "patient_id"], icu_df.columns) or icu_df.columns[0]))
     icu_in = st.selectbox("📅 입실일", icu_df.columns, index=icu_df.columns.get_loc(find_column(["입실"], icu_df.columns) or icu_df.columns[0]))
@@ -296,6 +304,44 @@ if icu_file and culture_file:
             except Exception as e:
                 st.warning(f"⚠️ 생년월일 병합에 실패했습니다: {e}")
 
+        # KONIS 등록여부 병합
+        if not bsi_df.empty and 'bsi_id_col' in locals():
+            bsi_df[bsi_date]=parse_dates_safe(bsi_df[bsi_date]).dt.date
+            bsi_col=[bsi_id_col, bsi_date, bsi_pathogen]
+            if use_lcbi_col: 
+                bsi_col+=[bsi_lcbi]
+            bsi_df=bsi_df[bsi_col]
+
+            # 성별, 생년월일 기준 병합
+            result2 = []
+            for i, row in result.iterrows():
+                id, cult_d = row[culture_id], pd.to_datetime(row[culture_date]).date()
+                candidates = bsi_df[
+                    (bsi_df[bsi_id_col] == id) &
+                    (bsi_df[bsi_date] <= cult_d) & ## 감염발생일 이후에 컬처 시행
+                    (bsi_df[bsi_date] + pd.Timedelta(days=2) >= cult_d) ## 감염발생일 2일 이내 컬처 시행
+                ]
+                top3_candidates = candidates.drop_duplicates().head(3)
+                top3_date = pd.to_datetime(top3_candidates[bsi_date], errors='coerce').dt.strftime("%y%m%d")
+                top3_pathogen = top3_candidates[bsi_pathogen]
+                
+                if use_lcbi_col:
+                    top3_lcbi=top3_candidates[bsi_lcbi]
+                    top3_lcbi=top3_lcbi.astype(str).str.extract(r'(\d+)')[0] 
+                    top3_lcbi=top3_lcbi.where(top3_lcbi.notna(), "") 
+                    top3_lcbi=top3_lcbi.apply(lambda x: f"LCBI {x}" if x else "")
+                else: 
+                    top3_lcbi = pd.Series([""] * len(top3_candidates))
+                
+                triplets = zip(top3_date, top3_pathogen, top3_lcbi)
+                formatted = [f"{d} {p} {l}" for d, p, l in triplets]
+                final_string = " OR ".join(formatted)
+                result2.append({"row_origin":i+1, 
+                                "KONIS_reported": "Y" if top3_candidates.shape[0]>0 else "N", ##boolean
+                                "KONIS_detail": final_string})
+
+            konis_df = pd.DataFrame(result2)
+            result = pd.concat([result, konis_df[["KONIS_reported","KONIS_detail"]]], axis=1)
 
         # 날짜 포맷을 yyyy-mm-dd로 통일
         date_cols = [icu_in, icu_out, culture_date]
@@ -307,8 +353,6 @@ if icu_file and culture_file:
                 result[col] = pd.to_datetime(result[col], errors="coerce").dt.strftime("%Y-%m-%d")
 
         result = result.drop_duplicates(subset=[culture_id, culture_date, culture_result] if use_result_col else [culture_id, culture_date])        
-
-
 
         # 기존 "비고" 컬럼이 존재하면 삭제
         # 비고 컬럼 추가: NICU/신생아 포함 + ICU 입실정보가 없는 경우
@@ -339,10 +383,7 @@ if icu_file and culture_file:
         ).drop(columns=["order_sort"])
         result_sorted.insert(0, "No", range(1, len(result_sorted) + 1))
 
-        # KONIS 등록여부 병합
-        if not bsi_df.empty and 'bsi_id_col' in locals():
-            result_sorted["KONIS"] = result_sorted[culture_id].isin(bsi_df[bsi_id_col]).map({True: "Y", False: "N"})
-            #result_sorted.rename(columns={"KONIS": "등록여부"}, inplace=True)
+
     
         # 환자ID를 문자열로 강제 변환
         result_sorted[culture_id] = result_sorted[culture_id].astype(str)
@@ -368,7 +409,8 @@ if icu_file and culture_file:
             icu_out: "퇴실일",
             culture_date: "혈액배양 의뢰일",
             "culture_result2": "혈액배양 분리균",
-            "KONIS": "KONIS WRAP 등록여부",
+            "KONIS_reported": "KONIS WRAP 등록여부",
+            "KONIS_detail": "KONIS WRAP 상세내용",
             "culture_ward2": "혈액배양 시행병동",
             "surv_window": "비고"
         }
