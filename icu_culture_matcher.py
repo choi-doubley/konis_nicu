@@ -90,7 +90,7 @@ st.markdown(
 
 # 파일 업로드
 culture_file = st.file_uploader("🧫 혈액배양 파일", type=["xlsx"])
-icu_file = st.file_uploader("👶 중환자실 입퇴실 파일", type=["xlsx"])
+icu_file = st.file_uploader("👶 중환자실 입퇴실 파일", type=["xlsx"], help="입실내역 추출기간을 조사기간보다 충분히 선행하도록 설정해주세요")
 bsi_file = st.file_uploader("🚨 KONIS WRAP 등록환자 파일 (optional)", type=["xlsx"], help="ID 포함한 엑셀파일 없는 경우 konisnicuwho.streamlit.app 참고")
 info_file = st.file_uploader("📄 추가 환자정보 파일 (optional)", type=["xlsx"], help="혈액배양, 중환자실 파일에 생년월일 또는 성별 정보가 없는 경우에만 필요")
 
