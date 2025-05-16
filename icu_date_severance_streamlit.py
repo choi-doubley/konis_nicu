@@ -5,6 +5,10 @@ import re
 import io
 
 st.title("환자 입퇴실일 계산기 (세브란스 양식)")
+st.markdown(
+"<div style='text-align:right; font-size: 0.9em; color: gray;'>"
+"최종 업데이트: 2025-05-16<br> 문의: cyypedr@gmail.com"
+"</div>", unsafe_allow_html=True)
 
 uploaded_files = st.file_uploader(
     "월별 입원 엑셀 파일을 모두 업로드하세요",
@@ -39,7 +43,7 @@ if uploaded_files:
     default_id_col = find_column(col_candidates, first_df.columns)
 
     # Streamlit에서 사용자 지정 받기
-    st.markdown("### 🔹 환자 식별자 컬럼 선택")
+    st.markdown("### 🆔 환자 식별자 컬럼 선택")
     id_column = st.selectbox(
         "환자 식별자에 해당하는 컬럼을 선택하세요:",
         options=first_df.columns.tolist(),
@@ -71,7 +75,8 @@ if uploaded_files:
     df_all = pd.concat(all_long, ignore_index=True)
     df_all = df_all.sort_values([id_column, "날짜"])
     min_date = pd.to_datetime(df_all["날짜"]).min()
-    
+    max_date = pd.to_datetime(df_all["날짜"]).max()
+
     # 3. 입원 블록 구분
     def assign_block(df):
         df = df.copy()
@@ -92,8 +97,11 @@ if uploaded_files:
     )
 
     result["입실일_dt"] = pd.to_datetime(result["입실일"])
+    result["퇴실일_dt"] = pd.to_datetime(result["퇴실일"])
     result["비고"] = ""
+    result.loc[result["입실일_dt"] == result["퇴실일_dt"], "비고"] = "당일 입퇴실"
     result.loc[result["입실일_dt"] == min_date, "비고"] = "입실일 확인 필요"
+    result.loc[result["퇴실일_dt"] == max_date, "비고"] = "퇴실일 확인 필요"
 
     # 5. 컬럼 정리 및 출력
     result = result[[id_column, "입실일", "퇴실일", "비고"]]
