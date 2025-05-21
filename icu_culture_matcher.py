@@ -85,9 +85,7 @@ st.markdown("<h1 style='text-align:center;'>👶 NICU KONIS<br>혈액배양양�
 st.markdown(
 "<div style='text-align:right; font-size: 0.9em; color: gray;'>"
 "<a href='https://github.com/choi-doubley/konis_nicu/blob/main/KONIS_NICU_streamlit_manual.pdf?raw=T' target='_blank'>매뉴얼 다운로드</a><br>"
-"최종 업데이트: 2025-05-12<br> 문의: cyypedr@gmail.com""</div>"
-"<div style='text-align:right; font-size: 0.9em; color: red;'>"
-"업로드오류가 있을 경우 파일명을 모두 영문으로 바꿔주세요"
+"최종 업데이트: 2025-05-12<br> 문의: cyypedr@gmail.com"
 "</div>", unsafe_allow_html=True)
 
 
